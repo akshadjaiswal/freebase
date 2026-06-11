@@ -1,0 +1,210 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL_UNPOOLED")
+}
+
+model Organization {
+  id           String  @id @default(cuid())
+  slug         String  @unique
+  name         String
+  logoUrl      String?
+  accentColor  String  @default("#10b981")
+  // HMAC-SHA256 signing key for widget JWT identification
+  secretKey    String  @unique @default(cuid())
+  customDomain String? @unique
+  createdAt    DateTime @default(now())
+
+  users                User[]
+  feedbackPosts        FeedbackPost[]
+  categories           Category[]
+  changelogPosts       ChangelogPost[]
+  roadmapItems         RoadmapItem[]
+  changelogSubscribers ChangelogSubscriber[]
+  webhooks             Webhook[]
+  apiKeys              ApiKey[]
+
+  @@map("organizations")
+}
+
+model User {
+  id        String   @id // Supabase Auth UID — must match exactly
+  orgId     String
+  email     String
+  role      String   @default("admin") // admin | member
+  createdAt DateTime @default(now())
+
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@map("users")
+}
+
+model FeedbackPost {
+  id          String   @id @default(cuid())
+  orgId       String
+  title       String
+  description String?
+  status      String   @default("open") // open | planned | in-progress | done | closed
+  categoryId  String?
+  authorEmail String
+  authorName  String?
+  pinned      Boolean  @default(false)
+  mergedInto  String?  // post id this was merged into (v1.1 feature)
+  voteCount   Int      @default(0) // denormalized — increment/decrement on vote
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  org          Organization     @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  category     Category?        @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  votes        FeedbackVote[]
+  comments     FeedbackComment[]
+  roadmapItems RoadmapItem[]
+
+  @@index([orgId, status])
+  @@index([orgId, voteCount])
+  @@index([orgId, createdAt])
+  @@map("feedback_posts")
+}
+
+model FeedbackVote {
+  id               String   @id @default(cuid())
+  postId           String
+  // Priority: userId (JWT) > voterEmail (identified) > voterFingerprint (anonymous)
+  voterEmail       String?  // set when user provides email or is identified
+  voterFingerprint String?  // SHA256(IP + User-Agent + orgId) — anonymous fallback
+  userId           String?  // Supabase UID when JWT-identified via widget
+  createdAt        DateTime @default(now())
+
+  post FeedbackPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  // Enforce one vote per identity per post
+  @@unique([postId, userId])
+  @@unique([postId, voterEmail])
+  @@unique([postId, voterFingerprint])
+  @@index([postId])
+  @@map("feedback_votes")
+}
+
+model FeedbackComment {
+  id          String   @id @default(cuid())
+  postId      String
+  authorEmail String
+  authorName  String?
+  body        String
+  createdAt   DateTime @default(now())
+
+  post FeedbackPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([postId])
+  @@map("feedback_comments")
+}
+
+model Category {
+  id    String @id @default(cuid())
+  orgId String
+  name  String
+  color String @default("#6366f1")
+
+  org   Organization   @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  posts FeedbackPost[]
+
+  @@unique([orgId, name])
+  @@map("categories")
+}
+
+model ChangelogPost {
+  id          String    @id @default(cuid())
+  orgId       String
+  title       String
+  slug        String
+  body        Json      // Tiptap ProseMirror JSON document
+  label       String    // feature | improvement | bug-fix | announcement
+  status      String    @default("draft") // draft | published
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  org   Organization    @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  reads ChangelogRead[]
+
+  @@unique([orgId, slug])
+  @@index([orgId, status])
+  @@index([orgId, publishedAt])
+  @@map("changelog_posts")
+}
+
+model ChangelogRead {
+  id              String   @id @default(cuid())
+  changelogPostId String
+  userEmail       String
+  readAt          DateTime @default(now())
+
+  post ChangelogPost @relation(fields: [changelogPostId], references: [id], onDelete: Cascade)
+
+  @@unique([changelogPostId, userEmail])
+  @@map("changelog_reads")
+}
+
+model ChangelogSubscriber {
+  id        String   @id @default(cuid())
+  orgId     String
+  email     String
+  confirmed Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, email])
+  @@index([orgId, confirmed])
+  @@map("changelog_subscribers")
+}
+
+model RoadmapItem {
+  id             String   @id @default(cuid())
+  orgId          String
+  feedbackPostId String?  // null = standalone item not linked to feedback
+  title          String
+  status         String   @default("planned") // planned | in-progress | done
+  position       Int      @default(0) // sort order within status column
+  visible        Boolean  @default(true)
+  createdAt      DateTime @default(now())
+
+  org          Organization  @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  feedbackPost FeedbackPost? @relation(fields: [feedbackPostId], references: [id], onDelete: SetNull)
+
+  @@index([orgId, status, position])
+  @@map("roadmap_items")
+}
+
+model Webhook {
+  id        String   @id @default(cuid())
+  orgId     String
+  url       String
+  events    String[] // post.created | post.status_changed | comment.created | changelog.published
+  secret    String   // stored as SHA-256 hash, shown to user once on creation
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@map("webhooks")
+}
+
+model ApiKey {
+  id         String    @id @default(cuid())
+  orgId      String
+  name       String
+  keyHash    String    @unique // SHA-256 of raw key — never store raw
+  keyPrefix  String    // first 12 chars e.g. "fb_live_a1b2" for display only
+  lastUsedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@map("api_keys")
+}
