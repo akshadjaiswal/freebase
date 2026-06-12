@@ -1,0 +1,158 @@
+import { NextRequest } from "next/server";
+import { createHash } from "crypto";
+import { z } from "zod";
+import { prisma } from "@/lib/prisma";
+import { errors, ok } from "@/lib/api";
+
+function getClientIp(request: NextRequest): string {
+  return request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+}
+
+function buildFingerprint(ip: string, ua: string, orgId: string): string {
+  return createHash("sha256").update(`${ip}|${ua}|${orgId}`).digest("hex");
+}
+
+const voteSchema = z.object({
+  email: z.string().email().optional(),
+  userId: z.string().optional(),
+});
+
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ org: string; id: string }> }
+) {
+  const { org: orgSlug, id: postId } = await params;
+
+  const org = await prisma.organization.findUnique({
+    where: { slug: orgSlug },
+    select: { id: true },
+  });
+  if (!org) return errors.notFound("Organization not found.");
+
+  const post = await prisma.feedbackPost.findFirst({
+    where: { id: postId, orgId: org.id },
+    select: { id: true, voteCount: true },
+  });
+  if (!post) return errors.notFound("Post not found.");
+
+  let body: unknown = {};
+  try {
+    body = await request.json();
+  } catch {
+    // empty body is fine
+  }
+
+  const parsed = voteSchema.safeParse(body);
+  const voterEmail = parsed.success ? parsed.data.email : undefined;
+  const jwtUserId = parsed.success ? parsed.data.userId : undefined;
+
+  const ip = getClientIp(request);
+  const ua = request.headers.get("user-agent") ?? "unknown";
+  const voterFingerprint = buildFingerprint(ip, ua, org.id);
+
+  // Check for existing vote — priority: userId > email > fingerprint
+  let existingVote = null;
+  if (jwtUserId) {
+    existingVote = await prisma.feedbackVote.findUnique({
+      where: { postId_userId: { postId, userId: jwtUserId } },
+    });
+  } else if (voterEmail) {
+    existingVote = await prisma.feedbackVote.findUnique({
+      where: { postId_voterEmail: { postId, voterEmail } },
+    });
+  } else {
+    existingVote = await prisma.feedbackVote.findUnique({
+      where: { postId_voterFingerprint: { postId, voterFingerprint } },
+    });
+  }
+
+  if (existingVote) return errors.conflict("Already voted on this post.");
+
+  await prisma.$transaction([
+    prisma.feedbackVote.create({
+      data: {
+        postId,
+        voterEmail: voterEmail ?? null,
+        voterFingerprint: jwtUserId ? null : voterFingerprint,
+        userId: jwtUserId ?? null,
+      },
+    }),
+    prisma.feedbackPost.update({
+      where: { id: postId },
+      data: { voteCount: { increment: 1 } },
+    }),
+  ]);
+
+  const updated = await prisma.feedbackPost.findUnique({
+    where: { id: postId },
+    select: { voteCount: true },
+  });
+
+  return ok({ votes: updated!.voteCount, voted: true }, 201);
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ org: string; id: string }> }
+) {
+  const { org: orgSlug, id: postId } = await params;
+
+  const org = await prisma.organization.findUnique({
+    where: { slug: orgSlug },
+    select: { id: true },
+  });
+  if (!org) return errors.notFound("Organization not found.");
+
+  const post = await prisma.feedbackPost.findFirst({
+    where: { id: postId, orgId: org.id },
+    select: { id: true },
+  });
+  if (!post) return errors.notFound("Post not found.");
+
+  let body: unknown = {};
+  try {
+    body = await request.json();
+  } catch {
+    // empty body is fine
+  }
+
+  const parsed = voteSchema.safeParse(body);
+  const voterEmail = parsed.success ? parsed.data.email : undefined;
+  const jwtUserId = parsed.success ? parsed.data.userId : undefined;
+
+  const ip = getClientIp(request);
+  const ua = request.headers.get("user-agent") ?? "unknown";
+  const voterFingerprint = buildFingerprint(ip, ua, org.id);
+
+  let existingVote = null;
+  if (jwtUserId) {
+    existingVote = await prisma.feedbackVote.findUnique({
+      where: { postId_userId: { postId, userId: jwtUserId } },
+    });
+  } else if (voterEmail) {
+    existingVote = await prisma.feedbackVote.findUnique({
+      where: { postId_voterEmail: { postId, voterEmail } },
+    });
+  } else {
+    existingVote = await prisma.feedbackVote.findUnique({
+      where: { postId_voterFingerprint: { postId, voterFingerprint } },
+    });
+  }
+
+  if (!existingVote) return errors.notFound("No vote found to remove.");
+
+  await prisma.$transaction([
+    prisma.feedbackVote.delete({ where: { id: existingVote.id } }),
+    prisma.feedbackPost.update({
+      where: { id: postId },
+      data: { voteCount: { decrement: 1 } },
+    }),
+  ]);
+
+  const updated = await prisma.feedbackPost.findUnique({
+    where: { id: postId },
+    select: { voteCount: true },
+  });
+
+  return ok({ votes: Math.max(0, updated!.voteCount), voted: false });
+}
