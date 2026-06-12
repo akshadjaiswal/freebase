@@ -114,9 +114,30 @@ App runs at `http://localhost:3000`
 
 ---
 
-### Phase 2 — Feedback Board (coming)
+### Phase 2 — Feedback Board ✅
 
-_Will be added after Phase 2 is complete._
+1. `http://localhost:3000/[your-slug]/feedback` — public feedback board loads
+2. Topbar shows: org name, Feedback/Changelog/Roadmap tabs, theme toggle
+3. Click "Submit feedback" → modal opens with title, description, category, email fields
+4. Fill in title (min 5 chars) + email → submit → post appears in list
+5. Post card shows: vote count, title, description preview, status badge, comment count
+6. Click vote button → count increments (optimistic UI) → refresh → count persists
+7. Vote again → 409 conflict → count stays unchanged (dedup working)
+8. Click post card → post detail modal opens with full description
+9. In detail modal: add a comment with email → comment appears immediately
+10. Filter bar: click "Open" tab → only open posts shown
+11. Sort dropdown: change to "Newest" → posts reorder
+12. Search box: type partial title → results filter in real time (300ms debounce)
+13. `http://localhost:3000/[slug]/admin/feedback` — admin table loads
+14. Admin: status dropdown on each row → change to "Planned" → badge updates instantly
+15. Admin: "Pin to top" via row actions → post gets pin icon → unpinned posts sort below
+16. Admin: delete post → confirm dialog → post removed from list
+17. Admin: "Manage categories" button → create category with name + color → appears in list
+18. Admin: delete category → inline confirm → removed
+19. Admin: select multiple posts with checkboxes → choose bulk status → Apply → all update
+20. API: `curl http://localhost:3000/api/v1/orgs/[slug]/posts` → 200 JSON with posts array
+21. API: `curl -X POST -H "Content-Type: application/json" -d '{"title":"Test","authorEmail":"a@b.com"}' http://localhost:3000/api/v1/orgs/[slug]/posts` → 400 (title too short)
+22. API: `curl http://localhost:3000/api/v1/orgs/nonexistent/posts` → 404 problem+json
 
 ---
 
@@ -185,3 +206,10 @@ If Upstash env vars are not set, rate limiting is silently skipped. This is inte
 
 **Email subscribe button not showing**
 Expected. `EMAIL_FROM_DOMAIN` env var must be set with a Resend-verified domain. Leave blank to disable the feature.
+
+**Tailwind CSS utility classes not applying (everything unstyled)**
+Tailwind v4 requires `@tailwindcss/postcss`. Make sure `apps/web/postcss.config.mjs` exists with:
+```js
+export default { plugins: { "@tailwindcss/postcss": {} } };
+```
+If missing, `@import "tailwindcss"` in `globals.css` only processes custom CSS — zero utility classes are generated. Clear `.next/` and restart dev server after adding it.

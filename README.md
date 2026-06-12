@@ -15,13 +15,13 @@ Feedback boards, changelogs, and roadmaps for your product. Self-hostable, MIT l
 
 ## Status
 
-Phase 1 (foundation) is done. Building the rest in the open.
+Phases 1 and 2 are done. Building the rest in the open.
 
 | Phase | Status |
 |---|---|
 | Monorepo scaffold, auth, admin shell | ✅ done |
-| Feedback board | 🔨 next |
-| Changelog | — |
+| Feedback board | ✅ done |
+| Changelog | 🔨 next |
 | Roadmap | — |
 | Widget | — |
 | API keys, webhooks, settings | — |

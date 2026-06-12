@@ -5,7 +5,7 @@ This file is the primary context for building Freebase. Read it at the start of 
 ## Phase Status
 
 - [x] Phase 1 — Monorepo scaffold, Prisma schema, auth, admin shell, marketing page
-- [ ] Phase 2 — Feedback board (public + admin + voting + comments)
+- [x] Phase 2 — Feedback board (public + admin + voting + comments)
 - [ ] Phase 3 — Changelog (Tiptap editor, public page, RSS, email)
 - [ ] Phase 4 — Roadmap (kanban, admin promote/drag, public view)
 - [ ] Phase 5 — Embeddable widget (Vite bundle, 3 surfaces, JWT identify)
@@ -79,6 +79,25 @@ This file is the primary context for building Freebase. Read it at the start of 
 - `apps/web/lib/rate-limit.ts` — Upstash rate limiter instances
 - `apps/web/components/ui/` — owned shadcn/ui components
 - `apps/web/components/layout/sidebar.tsx` — admin sidebar
+- `apps/web/components/layout/topbar.tsx` — public pages topbar (Feedback/Changelog/Roadmap nav)
+
+### Phase 2 — Feedback Board
+- `apps/web/app/[org]/feedback/page.tsx` — public feedback board page (Server Component)
+- `apps/web/app/[org]/feedback/feedback-board.tsx` — client board with filters, search, post list, modals
+- `apps/web/app/[org]/admin/feedback/page.tsx` — admin page (Server Component, loads posts+categories)
+- `apps/web/app/[org]/admin/feedback/admin-feedback-client.tsx` — admin table with status, pin, bulk, categories
+- `apps/web/components/feedback/post-card.tsx` — public post card with vote + status
+- `apps/web/components/feedback/vote-button.tsx` — optimistic vote toggle
+- `apps/web/components/feedback/status-badge.tsx` — colored status badge
+- `apps/web/components/feedback/post-form.tsx` — submit feedback form (dialog)
+- `apps/web/components/feedback/post-detail.tsx` — post detail with comments (dialog)
+- `apps/web/app/api/v1/orgs/[org]/posts/route.ts` — GET list, POST create
+- `apps/web/app/api/v1/orgs/[org]/posts/[id]/route.ts` — GET, PATCH (admin), DELETE (admin)
+- `apps/web/app/api/v1/orgs/[org]/posts/[id]/vote/route.ts` — POST vote, DELETE unvote (dedup logic)
+- `apps/web/app/api/v1/orgs/[org]/posts/[id]/comments/route.ts` — GET list, POST create
+- `apps/web/app/api/v1/orgs/[org]/posts/[id]/comments/[commentId]/route.ts` — DELETE (admin)
+- `apps/web/app/api/v1/orgs/[org]/categories/route.ts` — GET list, POST create (admin)
+- `apps/web/app/api/v1/orgs/[org]/categories/[id]/route.ts` — DELETE (admin)
 
 ---
 
@@ -213,6 +232,19 @@ All decisions are locked in `/research/`:
 
 ## Known Issues / TODOs
 
-- [ ] Need CalSans-SemiBold.woff2 font file in `apps/web/fonts/` — download from cal.com/fonts
 - [ ] Rate limiting gracefully skipped if Upstash not configured (returns null limiter)
-- [ ] Public org pages (`/[org]/feedback` etc.) are stub placeholders until Phase 2+
+- [x] Phase 2 feedback board — public + admin + API — DONE
+- [x] CalSans-SemiBold.woff2 downloaded and wired via `next/font/local` in `app/layout.tsx`
+- [x] Tailwind CSS v4 + Turbopack fix — `@tailwindcss/postcss` installed, `postcss.config.mjs` added
+
+## Prisma Client Note (pnpm monorepo)
+
+Schema sets `output = "../../../node_modules/.prisma/client"` so Turbopack can find the generated client.
+After any schema change, run: `pnpm --filter db generate`
+The generated client lands at repo root `node_modules/.prisma/client/`.
+
+## Tailwind CSS v4 + Turbopack Note
+
+Tailwind v4 requires `@tailwindcss/postcss` plugin — it does NOT auto-integrate with Next.js/Turbopack.
+`apps/web/postcss.config.mjs` wires it up. Without this, `@import "tailwindcss"` in `globals.css` only
+processes custom CSS; zero utility classes are generated.
