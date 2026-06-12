@@ -1,23 +1,54 @@
+import { prisma } from "@/lib/prisma";
+import { AdminFeedbackClient } from "./admin-feedback-client";
+
 interface Props {
   params: Promise<{ org: string }>;
 }
 
 export default async function AdminFeedbackPage({ params }: Props) {
-  const { org } = await params;
+  const { org: orgSlug } = await params;
+
+  const org = await prisma.organization.findUnique({
+    where: { slug: orgSlug },
+    select: { id: true },
+  });
+
+  const [posts, categories] = await Promise.all([
+    prisma.feedbackPost.findMany({
+      where: { orgId: org!.id },
+      orderBy: [{ pinned: "desc" }, { voteCount: "desc" }, { createdAt: "desc" }],
+      include: {
+        category: { select: { id: true, name: true, color: true } },
+        _count: { select: { comments: true, votes: true } },
+      },
+    }),
+    prisma.category.findMany({
+      where: { orgId: org!.id },
+      orderBy: { name: "asc" },
+    }),
+  ]);
 
   return (
-    <div className="p-8">
-      <div className="mb-6">
-        <h1 className="text-xl font-semibold text-[var(--text-primary)]">Feedback</h1>
-        <p className="mt-1 text-sm text-[var(--text-secondary)]">
-          Manage feedback posts for <span className="text-[var(--text-primary)]">{org}</span>
-        </p>
-      </div>
-      <div className="rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] p-12 text-center">
-        <p className="text-sm text-[var(--text-muted)]">
-          Feedback board coming in Phase 2
-        </p>
-      </div>
-    </div>
+    <AdminFeedbackClient
+      orgSlug={orgSlug}
+      initialPosts={posts.map((p: (typeof posts)[0]) => ({
+        id: p.id,
+        title: p.title,
+        description: p.description,
+        status: p.status,
+        votes: p.voteCount,
+        commentCount: p._count.comments,
+        category: p.category,
+        pinned: p.pinned,
+        author: { email: p.authorEmail, name: p.authorName },
+        createdAt: p.createdAt.toISOString(),
+        updatedAt: p.updatedAt.toISOString(),
+      }))}
+      initialCategories={categories.map((c: (typeof categories)[0]) => ({
+        id: c.id,
+        name: c.name,
+        color: c.color,
+      }))}
+    />
   );
 }
