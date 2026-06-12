@@ -11,6 +11,8 @@ const inter = Inter({
   display: "swap",
 });
 
+// Cal Sans — SIL Open Font License (free for all use)
+// Source: https://github.com/calcom/font
 const calSans = localFont({
   src: "../fonts/CalSans-SemiBold.woff2",
   variable: "--font-cal",

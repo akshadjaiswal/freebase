@@ -61,6 +61,9 @@
   --radius-lg: 8px;
   --radius-xl: 12px;
 
+  /* Font — Cal Sans used for marketing headings. Falls back to system sans if not installed. */
+  --font-cal: system-ui, -apple-system, sans-serif;
+
   /* Sidebar width */
   --sidebar-width: 240px;
   --sidebar-collapsed: 48px;
