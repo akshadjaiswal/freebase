@@ -141,9 +141,37 @@ App runs at `http://localhost:3000`
 
 ---
 
-### Phase 3 — Changelog (coming)
+### Phase 3 — Changelog ✅
 
-_Will be added after Phase 3 is complete._
+1. `http://localhost:3000/[slug]/admin/changelog` — admin list loads, shows "No changelog entries yet"
+2. Click "New entry" → editor page opens with toolbar, title input, slug/label fields
+3. Type a title → slug auto-generates (kebab-case) → slug field updates live
+4. Write content in editor: bold, italic, heading, list, code block
+5. Click "Save draft" → redirected to edit page (`/admin/changelog/[id]`), status = "Draft"
+6. Entry appears in admin list with "Draft" badge
+7. Back on edit page, click "Publish" → status badge changes to "Published"
+8. `http://localhost:3000/[slug]/changelog` — public list shows the published entry with label badge and date
+9. Entry grouped under correct year/month header
+10. Click entry card → single post page loads with full rich text (headings, code blocks render correctly)
+11. "← Back to changelog" link works
+12. `http://localhost:3000/[slug]/changelog/rss.xml` — valid RSS 2.0 XML (open in browser or validate at validator.w3.org/feed)
+13. RSS contains correct post title, link, pubDate, description (HTML)
+14. Draft posts do NOT appear in public list or RSS
+15. API: `curl http://localhost:3000/api/v1/orgs/[slug]/changelog` → 200 with published posts
+16. API: `curl http://localhost:3000/api/v1/orgs/[slug]/changelog?status=draft` → 401 (admin only)
+17. API: `curl http://localhost:3000/api/v1/orgs/nonexistent/changelog` → 404 problem+json
+
+**Email (only if EMAIL_FROM_DOMAIN + RESEND_API_KEY set):**
+
+18. Subscribe button visible on public changelog page
+19. Click → modal opens with email input
+20. Enter email → submit → "Confirmation email sent" message
+21. Check inbox → click confirm link → confirmation page shows success
+22. Publish a new entry → confirmed subscribers receive email with link
+
+**Email gated (without EMAIL_FROM_DOMAIN set):**
+
+23. Subscribe button NOT shown on public changelog page
 
 ---
 

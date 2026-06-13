@@ -6,7 +6,7 @@ This file is the primary context for building Freebase. Read it at the start of 
 
 - [x] Phase 1 — Monorepo scaffold, Prisma schema, auth, admin shell, marketing page
 - [x] Phase 2 — Feedback board (public + admin + voting + comments)
-- [ ] Phase 3 — Changelog (Tiptap editor, public page, RSS, email)
+- [x] Phase 3 — Changelog (Tiptap editor, public page, RSS, email subscriptions)
 - [ ] Phase 4 — Roadmap (kanban, admin promote/drag, public view)
 - [ ] Phase 5 — Embeddable widget (Vite bundle, 3 surfaces, JWT identify)
 - [ ] Phase 6 — API keys, webhooks, settings, Docker Compose, README
@@ -98,6 +98,26 @@ This file is the primary context for building Freebase. Read it at the start of 
 - `apps/web/app/api/v1/orgs/[org]/posts/[id]/comments/[commentId]/route.ts` — DELETE (admin)
 - `apps/web/app/api/v1/orgs/[org]/categories/route.ts` — GET list, POST create (admin)
 - `apps/web/app/api/v1/orgs/[org]/categories/[id]/route.ts` — DELETE (admin)
+
+### Phase 3 — Changelog
+- `apps/web/app/[org]/admin/changelog/page.tsx` — admin list with create button
+- `apps/web/app/[org]/admin/changelog/new/page.tsx` — new entry page (wraps ChangelogEditor)
+- `apps/web/app/[org]/admin/changelog/[id]/page.tsx` — edit page (wraps ChangelogEditor)
+- `apps/web/components/changelog/changelog-editor.tsx` — client editor: title, slug, label, status, Tiptap
+- `apps/web/components/changelog/tiptap-editor.tsx` — Tiptap toolbar + editor (Bold/Italic/Code/CodeBlock/Link/H2/H3/List/Blockquote)
+- `apps/web/components/changelog/changelog-entry.tsx` — public card + LabelBadge component
+- `apps/web/components/changelog/subscribe-button.tsx` — email subscribe modal (env-gated)
+- `apps/web/app/[org]/changelog/page.tsx` — public list, year/month grouped
+- `apps/web/app/[org]/changelog/[slug]/page.tsx` — single post with server-rendered HTML (generateHTML)
+- `apps/web/app/[org]/changelog/rss.xml/route.ts` — RSS 2.0 feed
+- `apps/web/app/[org]/changelog/confirm/page.tsx` — subscription confirmation page (HMAC token verify)
+- `apps/web/app/api/v1/orgs/[org]/changelog/route.ts` — GET list, POST create
+- `apps/web/app/api/v1/orgs/[org]/changelog/[slug]/route.ts` — GET, PATCH (publish + email), DELETE
+- `apps/web/app/api/v1/orgs/[org]/changelog/subscribe/route.ts` — POST subscribe (double opt-in)
+
+### Tiptap packages (Phase 3)
+- `@tiptap/react @tiptap/pm @tiptap/starter-kit @tiptap/extension-link @tiptap/extension-code-block @tiptap/html`
+- `@tiptap/html` — server-side `generateHTML()` for public post page + RSS feed
 
 ---
 

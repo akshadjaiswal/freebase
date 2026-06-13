@@ -28,6 +28,11 @@ export const metadata: Metadata = {
   description:
     "Open source customer feedback, changelog, and roadmap platform. Self-host or deploy to Vercel free tier.",
   keywords: ["feedback", "changelog", "roadmap", "open source", "featurebase alternative"],
+  icons: {
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+    ],
+  },
 };
 
 export default function RootLayout({
