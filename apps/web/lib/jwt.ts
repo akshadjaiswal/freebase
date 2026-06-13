@@ -67,6 +67,11 @@ export function verifyWebhookSignature(
   }
 }
 
+// Changelog subscription confirmation token — HMAC(email, orgSecretKey)
+export function makeChangelogConfirmToken(email: string, orgSecret: string): string {
+  return createHmac("sha256", orgSecret).update(email).digest("hex");
+}
+
 // Compute HMAC signature for outgoing webhooks
 export function signWebhookPayload(
   rawBody: string,
