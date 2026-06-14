@@ -1,23 +1,65 @@
+import { redirect } from "next/navigation";
+import { prisma } from "@/lib/prisma";
+import { verifyAdminAccess } from "@/lib/auth";
+import { AdminRoadmapClient } from "@/components/roadmap/admin-roadmap-client";
+
 interface Props {
   params: Promise<{ org: string }>;
 }
 
 export default async function AdminRoadmapPage({ params }: Props) {
-  const { org } = await params;
+  const { org: orgSlug } = await params;
+
+  const session = await verifyAdminAccess(orgSlug);
+  if (!session) redirect(`/login?next=/${orgSlug}/admin/roadmap`);
+
+  const org = await prisma.organization.findUnique({
+    where: { slug: orgSlug },
+    select: { id: true },
+  });
+  if (!org) redirect("/login");
+
+  const [items, feedbackPosts] = await Promise.all([
+    prisma.roadmapItem.findMany({
+      where: { orgId: org.id },
+      orderBy: [{ position: "asc" }],
+      include: {
+        feedbackPost: { select: { voteCount: true } },
+      },
+    }),
+    prisma.feedbackPost.findMany({
+      where: { orgId: org.id },
+      orderBy: { voteCount: "desc" },
+      select: {
+        id: true,
+        title: true,
+        voteCount: true,
+        status: true,
+      },
+    }),
+  ]);
+
+  const format = (item: typeof items[number]) => ({
+    id: item.id,
+    title: item.title,
+    status: item.status,
+    position: item.position,
+    visible: item.visible,
+    feedbackPostId: item.feedbackPostId,
+    votes: item.feedbackPost?.voteCount ?? 0,
+  });
+
+  const initialData = {
+    planned: items.filter((i) => i.status === "planned").map(format),
+    inProgress: items.filter((i) => i.status === "in-progress").map(format),
+    done: items.filter((i) => i.status === "done").map(format),
+  };
 
   return (
-    <div className="p-8">
-      <div className="mb-6">
-        <h1 className="text-xl font-semibold text-[var(--text-primary)]">Roadmap</h1>
-        <p className="mt-1 text-sm text-[var(--text-secondary)]">
-          Manage roadmap items for <span className="text-[var(--text-primary)]">{org}</span>
-        </p>
-      </div>
-      <div className="rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] p-12 text-center">
-        <p className="text-sm text-[var(--text-muted)]">
-          Roadmap kanban coming in Phase 4
-        </p>
-      </div>
-    </div>
+    <AdminRoadmapClient
+      orgSlug={orgSlug}
+      initialData={initialData}
+      feedbackPosts={feedbackPosts}
+    />
   );
 }
