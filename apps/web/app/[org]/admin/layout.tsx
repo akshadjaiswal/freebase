@@ -3,6 +3,7 @@ import { ThemeProvider } from "next-themes";
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { Sidebar } from "@/components/layout/sidebar";
+import { CommandPalette } from "@/components/layout/command-palette";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -46,6 +47,7 @@ export default async function AdminLayout({ children, params }: AdminLayoutProps
           {children}
         </main>
       </div>
+      <CommandPalette orgSlug={orgSlug} />
     </ThemeProvider>
   );
 }

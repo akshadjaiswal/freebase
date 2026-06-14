@@ -87,6 +87,19 @@ export function Sidebar({ orgSlug, orgName, userEmail }: SidebarProps) {
         </Link>
       </nav>
 
+      {/* ⌘K hint */}
+      <div className="px-3 pb-1">
+        <button
+          onClick={() => {
+            document.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true, bubbles: true }));
+          }}
+          className="w-full flex items-center gap-2 rounded-[var(--radius)] border border-[var(--border)] px-2.5 py-1.5 text-xs text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:border-[var(--border-raised)] transition-colors"
+        >
+          <span className="flex-1 text-left">Search…</span>
+          <kbd className="font-mono text-[10px]">⌘K</kbd>
+        </button>
+      </div>
+
       {/* Footer: user + theme toggle */}
       <div className="flex items-center justify-between border-t border-[var(--border)] px-3 py-2.5">
         <div className="flex items-center gap-2 min-w-0">
