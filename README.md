@@ -23,8 +23,8 @@ Phases 1–4 are done. Building the rest in the open.
 | Feedback board | ✅ done |
 | Changelog | ✅ done |
 | Roadmap | ✅ done |
-| Embeddable widget | 🔨 next |
-| API keys, webhooks, settings | — |
+| Embeddable widget | ✅ done |
+| API keys, webhooks, settings | 🔨 next |
 
 ## Stack
 

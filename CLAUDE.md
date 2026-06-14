@@ -8,7 +8,7 @@ This file is the primary context for building Freebase. Read it at the start of 
 - [x] Phase 2 — Feedback board (public + admin + voting + comments)
 - [x] Phase 3 — Changelog (Tiptap editor, public page, RSS, email subscriptions)
 - [x] Phase 4 — Roadmap (kanban, admin promote/drag, public view)
-- [ ] Phase 5 — Embeddable widget (Vite bundle, 3 surfaces, JWT identify)
+- [x] Phase 5 — Embeddable widget (Vite bundle, 3 surfaces, JWT identify)
 - [ ] Phase 6 — API keys, webhooks, settings, Docker Compose, README
 
 ---
@@ -127,6 +127,39 @@ This file is the primary context for building Freebase. Read it at the start of 
 - `apps/web/components/roadmap/admin-roadmap-client.tsx` — full dnd-kit drag-and-drop kanban, promote modal, standalone create, visibility toggle
 - `apps/web/app/api/v1/orgs/[org]/roadmap/route.ts` — GET grouped by status, POST create (admin)
 - `apps/web/app/api/v1/orgs/[org]/roadmap/[id]/route.ts` — PATCH (status/position/visible/title, syncs feedback post status), DELETE
+
+### Phase 5 — Embeddable Widget
+- `apps/widget/package.json` — `@freebase/widget` workspace, Vite build
+- `apps/widget/vite.config.ts` — IIFE lib mode, `fileName: () => "sdk.js"`, esbuild minify
+- `apps/widget/src/index.ts` — `window.Freebase` command queue boot, dispatches init/identify/open/getUnreadCount
+- `apps/widget/src/api.ts` — fetch helpers, base URL, JWT header attachment via `X-Freebase-User`
+- `apps/widget/src/styles.ts` — full CSS string injected via `<style>` tag, CSS vars for theming
+- `apps/widget/src/feedback.ts` — floating pencil button + slide-in panel (380px) + form + success state
+- `apps/widget/src/changelog.ts` — "What's new" button + unread badge (localStorage) + popup (360×480px)
+- `apps/widget/src/roadmap.ts` — roadmap floating button (stacked above feedback) + slide-in panel + read-only kanban
+- `apps/web/app/api/widget/[org]/config/route.ts` — GET org name/accentColor/categories (public, no auth)
+- `apps/web/app/api/widget/[org]/identify/route.ts` — POST verify JWT, rate limited 60/min
+- `apps/web/public/cdn/v1/sdk.js` — built bundle (6.2 kB gzip, <20KB limit)
+- `apps/web/components/widget-demo.tsx` — `"use client"` component that loads `/cdn/v1/sdk.js` and calls `window.Freebase('init', {...})` on mount; used by the marketing page for live dogfood demo
+- **Env var:** `NEXT_PUBLIC_WIDGET_DEMO_ORG` — set to an org slug → marketing homepage shows live widget; unset → no widget (safe default)
+
+**Phase 5 build commands:**
+```bash
+pnpm --filter @freebase/widget build
+cp apps/widget/dist/sdk.js apps/web/public/cdn/v1/sdk.js
+# Verify size:
+gzip -c apps/web/public/cdn/v1/sdk.js | wc -c   # must be < 20480
+```
+
+**Widget command queue pattern (how `window.Freebase` works before script loads):**
+```html
+<script>
+  window.Freebase = window.Freebase || function(...a) { (window.Freebase.q = window.Freebase.q || []).push(a); };
+  window.Freebase('init', { org: 'acme' });
+</script>
+<script src="/cdn/v1/sdk.js" async></script>
+```
+SDK boots → drains the `.q` queue → replaces the stub.
 
 ### dnd-kit packages (Phase 4)
 - `@dnd-kit/core @dnd-kit/sortable @dnd-kit/utilities`

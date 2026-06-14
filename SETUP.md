@@ -207,9 +207,76 @@ App runs at `http://localhost:3000`
 
 ---
 
-### Phase 5 — Embeddable Widget (coming)
+### Phase 5 — Embeddable Widget ✅
 
-_Will be added after Phase 5 is complete._
+**Build the widget first:**
+```bash
+pnpm --filter @freebase/widget build
+cp apps/widget/dist/sdk.js apps/web/public/cdn/v1/sdk.js
+```
+
+**Test with a minimal HTML file** (save as `test-widget.html` in repo root):
+```html
+<!DOCTYPE html>
+<html>
+<head><title>Widget test</title></head>
+<body>
+<script>
+  window.Freebase = window.Freebase || function(...a) {
+    (window.Freebase.q = window.Freebase.q || []).push(a);
+  };
+  window.Freebase('init', { org: 'YOUR_ORG_SLUG', position: 'bottom-right' });
+</script>
+<script src="http://localhost:3000/cdn/v1/sdk.js" async></script>
+</body>
+</html>
+```
+Open `test-widget.html` in a browser while `pnpm dev` is running.
+
+**Checklist:**
+
+1. Three floating buttons appear bottom-right: feedback (pencil), changelog ("What's new"), roadmap (map icon)
+2. Feedback button click → slide-in panel opens (380px wide)
+3. Panel shows form: title, description, optional category, email
+4. Submit form with valid title (5+ chars) + email → post appears in admin feedback board
+5. Submit with short title → inline validation error shown
+6. Changelog "What's new" button shows unread badge (emerald circle with number)
+7. Click "What's new" → popup appears (360×480px) with recent changelog entries
+8. Popup shows label badge, date per entry; click entry → opens full post in new tab
+9. Close popup → reopen → badge gone (localStorage marked all as read)
+10. Roadmap button click → slide-in panel opens with three-column kanban (read-only)
+11. Roadmap columns show Planned / In Progress / Done with card titles and vote counts
+12. Close buttons and overlay click both close panels
+13. Theme auto-detects system preference (light/dark)
+
+**JWT identify test:**
+```html
+<script>
+  window.Freebase('identify', {
+    userId: 'test_123',
+    email: 'test@example.com',
+    name: 'Test User',
+    jwt: 'YOUR_SIGNED_JWT',
+  });
+</script>
+```
+14. After identify, submit feedback → post in admin shows `test@example.com` as author (not anon)
+
+**Bundle size check:**
+```bash
+gzip -c apps/web/public/cdn/v1/sdk.js | wc -c  # must be < 20480
+```
+15. Size is ~6200 bytes (well under limit)
+
+**Widget API endpoints:**
+16. `curl http://localhost:3000/api/widget/YOUR_SLUG/config` → 200 JSON with name/accentColor/categories
+17. `curl -X POST -H "Content-Type: application/json" -d '{"jwt":"bad"}' http://localhost:3000/api/widget/YOUR_SLUG/identify` → 401 unauthorized
+
+**Live widget on marketing page (dogfood demo):**
+18. Add `NEXT_PUBLIC_WIDGET_DEMO_ORG=your-slug` to `.env.local`
+19. Visit `http://localhost:3000` — three floating buttons appear bottom-right
+20. All 3 surfaces work exactly as they would on any host app
+21. Without env var → no widget, marketing page unchanged
 
 ---
 
