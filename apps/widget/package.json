@@ -1,0 +1,14 @@
+{
+  "name": "@freebase/widget",
+  "version": "0.1.0",
+  "private": true,
+  "main": "dist/sdk.js",
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite build --watch"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "vite": "^5.0.0"
+  }
+}
