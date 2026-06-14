@@ -175,9 +175,35 @@ App runs at `http://localhost:3000`
 
 ---
 
-### Phase 4 — Roadmap (coming)
+### Phase 4 — Roadmap
 
-_Will be added after Phase 4 is complete._
+**Public roadmap (`/[org]/roadmap`):**
+
+1. Visit `/[org]/roadmap` → page renders three empty columns: Planned / In Progress / Done
+2. Each column shows correct empty state text
+3. Mobile: columns scroll horizontally and snap to each column on swipe
+
+**Admin roadmap (`/[org]/admin/roadmap`):**
+
+4. Admin sidebar Roadmap link navigates to `/[org]/admin/roadmap`
+5. "Add item" button opens modal
+6. Modal: select "From feedback" tab → search feedback posts → select one → choose column → Add → card appears
+7. Modal: select "Standalone" tab → enter title → choose column → Add → card appears
+8. Card shows title and vote count (0 for standalone, real count for promoted post)
+9. Card shows "Hide" button → click → card gets 60% opacity, shows eye-off icon
+10. "Show" button re-shows card
+11. Deleted item (click Delete → confirm) → card removed from board
+12. Drag card within same column → reorders → refresh → order persists (PATCH called)
+13. Drag card to different column → card moves → status updates → refresh → still in new column
+14. Linked feedback post: after drag to "In Progress" → go to admin feedback → post shows "in-progress" status
+
+**Public roadmap (after admin actions):**
+
+15. Item marked visible → appears on public roadmap
+16. Item marked hidden (Hide) → does NOT appear on public roadmap
+17. Promoted item with feedbackPostId → shows "From feedback ↗" link on public card
+18. Standalone item → no "From feedback" link shown
+19. Vote count on public card matches feedback post's real vote count
 
 ---
 

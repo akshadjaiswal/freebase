@@ -7,7 +7,7 @@ This file is the primary context for building Freebase. Read it at the start of 
 - [x] Phase 1 — Monorepo scaffold, Prisma schema, auth, admin shell, marketing page
 - [x] Phase 2 — Feedback board (public + admin + voting + comments)
 - [x] Phase 3 — Changelog (Tiptap editor, public page, RSS, email subscriptions)
-- [ ] Phase 4 — Roadmap (kanban, admin promote/drag, public view)
+- [x] Phase 4 — Roadmap (kanban, admin promote/drag, public view)
 - [ ] Phase 5 — Embeddable widget (Vite bundle, 3 surfaces, JWT identify)
 - [ ] Phase 6 — API keys, webhooks, settings, Docker Compose, README
 
@@ -119,6 +119,21 @@ This file is the primary context for building Freebase. Read it at the start of 
 - `@tiptap/react @tiptap/pm @tiptap/starter-kit @tiptap/extension-link @tiptap/extension-code-block @tiptap/html`
 - `@tiptap/html` — server-side `generateHTML()` for public post page + RSS feed
 
+### Phase 4 — Roadmap
+- `apps/web/app/[org]/roadmap/page.tsx` — public 3-column kanban (Server Component), mobile snap scroll
+- `apps/web/app/[org]/admin/roadmap/page.tsx` — admin page (Server Component, loads items + all feedback posts)
+- `apps/web/components/roadmap/roadmap-card.tsx` — card: title, vote count, "From feedback" link, admin hide/delete controls
+- `apps/web/components/roadmap/kanban-column.tsx` — column with count badge, snap-start for mobile, empty state
+- `apps/web/components/roadmap/admin-roadmap-client.tsx` — full dnd-kit drag-and-drop kanban, promote modal, standalone create, visibility toggle
+- `apps/web/app/api/v1/orgs/[org]/roadmap/route.ts` — GET grouped by status, POST create (admin)
+- `apps/web/app/api/v1/orgs/[org]/roadmap/[id]/route.ts` — PATCH (status/position/visible/title, syncs feedback post status), DELETE
+
+### dnd-kit packages (Phase 4)
+- `@dnd-kit/core @dnd-kit/sortable @dnd-kit/utilities`
+- Drag within column: `SortableContext` + `useSortable` + `CSS.Transform`
+- Drag cross-column: `DragOverlay` + `onDragOver` mutates state, `onDragEnd` persists via PATCH
+- Status sync: when roadmap item status changes + `feedbackPostId` set → `prisma.feedbackPost.update({ status })`
+
 ---
 
 ## Design Tokens (from FRONTEND_DESIGN.md)
@@ -209,6 +224,37 @@ Changelog email subscriptions only work when `EMAIL_FROM_DOMAIN` env var is set.
 - After build: copy `apps/widget/dist/sdk.js` → `apps/web/public/cdn/v1/sdk.js`
 - Served from `/cdn/v1/sdk.js` — Vercel CDN-cached static file
 - Bundle size check: `gzip -c apps/web/public/cdn/v1/sdk.js | wc -c` — must be < 20480
+
+**How to start Phase 5 (if session compacted):**
+
+Read first: `CLAUDE.md` + `research/PLAN.md` Phase 5 section + `research/INTEGRATION.md` + `research/FRONTEND_DESIGN.md` widget spec
+
+Packages to install:
+```bash
+# In apps/widget (new Vite workspace):
+pnpm --filter widget add -D vite typescript
+```
+
+Key new files:
+- `apps/widget/package.json` — `"name": "@freebase/widget"`, `"main": "dist/sdk.js"`, build script
+- `apps/widget/vite.config.ts` — library mode, `entry: "src/index.ts"`, `fileName: "sdk"`, `formats: ["iife"]`
+- `apps/widget/src/index.ts` — `window.Freebase` command queue, `init` + `identify` commands
+- `apps/widget/src/api.ts` — fetch helpers, attach JWT header when identified
+- `apps/widget/src/styles.ts` — CSS string injected via `<style>` tag, CSS vars, NO Tailwind
+- `apps/widget/src/feedback.ts` — floating button + slide-in panel + form
+- `apps/widget/src/changelog.ts` — "What's new" button + unread badge (localStorage) + popup list
+- `apps/widget/src/roadmap.ts` — roadmap in slide-in panel, read-only 3-column
+- `apps/web/app/api/widget/[org]/config/route.ts` — GET org config (public, no auth)
+- `apps/web/app/api/widget/[org]/identify/route.ts` — POST verify JWT, rate limited 60/min
+- `apps/web/public/cdn/v1/sdk.js` — built output (copy from `apps/widget/dist/sdk.js`)
+
+After build: `pnpm --filter widget build && cp apps/widget/dist/sdk.js apps/web/public/cdn/v1/sdk.js`
+
+**Phase 5 gotchas to avoid:**
+- No React, no Tiptap, no Tailwind in widget bundle — pure vanilla TS
+- `window.Freebase` must use command queue pattern so it works when loaded async
+- Widget CSS must use CSS vars matching org accentColor — not hardcoded emerald
+- `localStorage` key for unread: `freebase_cl_read_${orgSlug}` — store array of read post IDs
 
 ---
 
