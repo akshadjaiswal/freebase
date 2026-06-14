@@ -4,6 +4,9 @@ const nextConfig: NextConfig = {
   // Enable React strict mode
   reactStrictMode: true,
 
+  // Standalone output for Docker deployment
+  output: process.env.DOCKER_BUILD ? "standalone" : undefined,
+
   // Transpile workspace packages
   transpilePackages: ["@freebase/db"],
 
