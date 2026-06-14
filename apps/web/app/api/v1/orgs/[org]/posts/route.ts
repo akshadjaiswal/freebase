@@ -2,7 +2,8 @@ import { NextRequest } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { errors, ok, encodeCursor, decodeCursor } from "@/lib/api";
-import { verifyAdminAccess, verifyApiKey } from "@/lib/auth";
+import { verifyAdminAccess } from "@/lib/auth";
+import { dispatchWebhook } from "@/lib/webhooks";
 
 const VALID_STATUSES = ["open", "planned", "in-progress", "done", "closed"] as const;
 const VALID_SORTS = ["votes", "created_at", "updated_at"] as const;
@@ -158,20 +159,25 @@ export async function POST(
     },
   });
 
-  return ok(
-    {
-      id: post.id,
-      title: post.title,
-      description: post.description,
-      status: post.status,
-      votes: post.voteCount,
-      commentCount: post._count.comments,
-      category: post.category,
-      author: { email: post.authorEmail, name: post.authorName },
-      pinned: post.pinned,
-      createdAt: post.createdAt,
-      updatedAt: post.updatedAt,
-    },
-    201
-  );
+  const result = {
+    id: post.id,
+    title: post.title,
+    description: post.description,
+    status: post.status,
+    votes: post.voteCount,
+    commentCount: post._count.comments,
+    category: post.category,
+    author: { email: post.authorEmail, name: post.authorName },
+    pinned: post.pinned,
+    createdAt: post.createdAt,
+    updatedAt: post.updatedAt,
+  };
+
+  dispatchWebhook(org.id, {
+    event: "post.created",
+    org: orgSlug,
+    data: { post: result },
+  });
+
+  return ok(result, 201);
 }

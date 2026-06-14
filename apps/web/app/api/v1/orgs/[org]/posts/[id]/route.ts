@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { errors, ok } from "@/lib/api";
 import { verifyAdminAccess } from "@/lib/auth";
+import { dispatchWebhook } from "@/lib/webhooks";
 
 export async function GET(
   request: NextRequest,
@@ -103,6 +104,16 @@ export async function PATCH(
         data: { status: roadmapStatus },
       });
     }
+
+    dispatchWebhook(admin.org.id, {
+      event: "post.status_changed",
+      org: orgSlug,
+      data: {
+        post: { id: updated.id, title: updated.title, status: updated.status },
+        previousStatus,
+        newStatus: updated.status,
+      },
+    });
   }
 
   return ok({

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { verifyAdminAccess } from "@/lib/auth";
 import { errors, ok } from "@/lib/api";
+import { dispatchWebhook } from "@/lib/webhooks";
 
 type RouteParams = { params: Promise<{ org: string; slug: string }> };
 
@@ -92,6 +93,14 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
         );
       })
       .catch((e) => console.error("Failed to send subscriber emails:", e));
+  }
+
+  if (isPublishing) {
+    dispatchWebhook(admin.org.id, {
+      event: "changelog.published",
+      org: orgSlug,
+      data: { post: { id: updated.id, title: updated.title, slug: updated.slug } },
+    });
   }
 
   return ok(updated);

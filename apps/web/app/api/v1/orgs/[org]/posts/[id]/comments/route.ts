@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { errors, ok } from "@/lib/api";
+import { dispatchWebhook } from "@/lib/webhooks";
 
 export async function GET(
   request: NextRequest,
@@ -85,13 +86,18 @@ export async function POST(
     },
   });
 
-  return ok(
-    {
-      id: comment.id,
-      body: comment.body,
-      author: { email: comment.authorEmail, name: comment.authorName },
-      createdAt: comment.createdAt,
-    },
-    201
-  );
+  const result = {
+    id: comment.id,
+    body: comment.body,
+    author: { email: comment.authorEmail, name: comment.authorName },
+    createdAt: comment.createdAt,
+  };
+
+  dispatchWebhook(org.id, {
+    event: "comment.created",
+    org: orgSlug,
+    data: { postId, comment: result },
+  });
+
+  return ok(result, 201);
 }
