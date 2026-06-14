@@ -280,9 +280,54 @@ gzip -c apps/web/public/cdn/v1/sdk.js | wc -c  # must be < 20480
 
 ---
 
-### Phase 6 — API Keys, Webhooks, Settings, Launch (coming)
+### Phase 6 — API Keys, Webhooks, Settings ✅
 
-_Will be added after Phase 6 is complete._
+**Settings page (`/[org]/admin/settings`):**
+
+1. Navigate to `/[org]/admin/settings` — page loads with sections: Organization, Widget Secret Key, API Keys, Webhooks, Email, Danger Zone
+2. Edit org name → click Save → name updates immediately
+3. Change accent color (color picker) → Save → color updates
+4. Widget Secret Key section → click eye icon → key revealed → copy button works
+5. Click "Regenerate secret" → confirm dialog → key regenerated (old widget JWTs invalidated)
+6. Email section shows green dot if `RESEND_API_KEY` + `EMAIL_FROM_DOMAIN` set, grey dot otherwise
+7. Danger zone: type org slug in input → Delete button activates → click → org deleted → redirect to `/`
+
+**API Keys:**
+
+8. Click "New key" → name input → Create → raw key shown once in modal with copy button
+9. Click "Done" → key appears in list with prefix (`fb_live_xxxx…`) + "Never used"
+10. Use the key: `curl -H "Authorization: Bearer <key>" http://localhost:3000/api/v1/orgs/[slug]/posts` → 200
+11. After use → "Last used" date updates
+12. Delete key → confirm → key removed from list → same curl → 401
+
+**Webhooks:**
+
+13. Click "Add webhook" → fill URL + secret (min 8 chars) + select events → Add
+14. Webhook appears in list with event badges + Active status toggle
+15. Click "Active" badge → toggles to "Paused" → webhook delivery skipped
+16. Trigger an event (e.g. change a feedback post status) → webhook delivers to your endpoint
+17. Verify signature on your receiver: `X-Freebase-Signature` header = `sha256=<hmac>`
+18. Delete webhook → removed from list
+
+**Command palette:**
+
+19. Press `⌘K` (or `Ctrl+K`) anywhere in admin → palette opens
+20. Type 2+ chars (e.g. "dark mode") → searches live feedback posts → results appear above nav items
+21. Click a post result → navigates to admin feedback
+22. Clear search → shows Navigate / Create / Public pages groups
+23. `Esc` closes palette
+24. Click "Search…" button in sidebar footer → also opens palette
+
+**REST API (non-admin access via API key):**
+
+25. `curl -H "Authorization: Bearer fb_live_xxx" http://localhost:3000/api/v1/orgs/[slug]/posts` → 200 with data
+26. `curl -H "Authorization: Bearer fb_live_xxx" -X POST -H "Content-Type: application/json" -d '{"title":"API test","authorEmail":"test@example.com"}' http://localhost:3000/api/v1/orgs/[slug]/posts` → 201
+
+**Docker (self-host):**
+
+27. `docker compose up -d` → app starts at `http://localhost:3000`
+28. `docker compose exec web sh -c "DATABASE_URL=\$DATABASE_URL_UNPOOLED npx prisma migrate deploy"` → migrations run
+29. App fully functional without Neon (uses bundled Postgres)
 
 ---
 

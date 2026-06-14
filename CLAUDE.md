@@ -9,7 +9,7 @@ This file is the primary context for building Freebase. Read it at the start of 
 - [x] Phase 3 — Changelog (Tiptap editor, public page, RSS, email subscriptions)
 - [x] Phase 4 — Roadmap (kanban, admin promote/drag, public view)
 - [x] Phase 5 — Embeddable widget (Vite bundle, 3 surfaces, JWT identify)
-- [ ] Phase 6 — API keys, webhooks, settings, Docker Compose, README
+- [x] Phase 6 — API keys, webhooks, settings, command palette, Docker Compose, README
 
 ---
 
@@ -160,6 +160,34 @@ gzip -c apps/web/public/cdn/v1/sdk.js | wc -c   # must be < 20480
 <script src="/cdn/v1/sdk.js" async></script>
 ```
 SDK boots → drains the `.q` queue → replaces the stub.
+
+### Phase 6 — API Keys, Webhooks, Settings, Docker
+- `apps/web/app/[org]/admin/settings/page.tsx` — Server Component: loads org, API keys, webhooks; passes `emailEnabled` flag; renders SettingsClient
+- `apps/web/app/[org]/admin/settings/settings-client.tsx` — full client: org name + accent color edit, widget secret reveal/regenerate, API keys CRUD (raw key shown once), webhooks CRUD (events multi-select, active toggle), email status indicator, danger zone (delete org with slug confirm)
+- `apps/web/app/api/v1/orgs/[org]/api-keys/route.ts` — GET list, POST create (returns raw key once in response)
+- `apps/web/app/api/v1/orgs/[org]/api-keys/[id]/route.ts` — DELETE
+- `apps/web/app/api/v1/orgs/[org]/webhooks/route.ts` — GET list, POST create (secret stored as SHA-256 hash)
+- `apps/web/app/api/v1/orgs/[org]/webhooks/[id]/route.ts` — PATCH (active toggle), DELETE
+- `apps/web/app/api/v1/orgs/[org]/settings/route.ts` — GET org settings, PATCH (name, accentColor, regenerateSecret), DELETE (cascades all data + deletes Supabase auth user)
+- `apps/web/lib/webhooks.ts` — `dispatchWebhook(orgId, payload)` fire-and-forget, retry schedule: immediate → 30s → 5min → 30min → 2hr
+- `apps/web/components/layout/command-palette.tsx` — cmdk `⌘K` palette: 2+ char query → live feedback post search via `/api/v1/orgs/[org]/posts?q=...`; empty query → nav/create/public-pages groups
+- `docker-compose.yml` — Postgres + web service, single `docker compose up -d`
+- `Dockerfile` — multi-stage: deps → widget build → web build → standalone runner
+- `apps/web/next.config.ts` — `output: "standalone"` when `DOCKER_BUILD=true`
+
+**Settings page sections (in order):**
+1. Organization — name (editable), slug (read-only), accent color (color picker)
+2. Widget Secret Key — reveal/hide toggle, copy, regenerate (invalidates all widget JWTs)
+3. API Keys — list with prefix + last used, create (raw key shown once), delete
+4. Webhooks — list with events + active toggle, create (URL + secret + events multi-select), delete
+5. Email Subscriptions — status indicator: green if `RESEND_API_KEY` + `EMAIL_FROM_DOMAIN` set, grey otherwise
+6. Danger Zone — type org slug to confirm, then delete (cascades all records + Supabase user)
+
+**Webhook events wired:**
+- `post.created` → `posts/route.ts` POST
+- `post.status_changed` → `posts/[id]/route.ts` PATCH
+- `comment.created` → `posts/[id]/comments/route.ts` POST
+- `changelog.published` → `changelog/[slug]/route.ts` PATCH (when status flips draft→published)
 
 ### dnd-kit packages (Phase 4)
 - `@dnd-kit/core @dnd-kit/sortable @dnd-kit/utilities`
@@ -332,9 +360,12 @@ All decisions are locked in `/research/`:
 ## Known Issues / TODOs
 
 - [ ] Rate limiting gracefully skipped if Upstash not configured (returns null limiter)
+- [ ] Delete org Supabase user cleanup uses dynamic import of `@supabase/supabase-js` admin client — works but not tree-shaken; acceptable for a rare operation
+- [x] Docker `standalone` output — `DOCKER_BUILD=true` set in Dockerfile build stage, `output: "standalone"` conditional in `next.config.ts`
 - [x] Phase 2 feedback board — public + admin + API — DONE
 - [x] CalSans-SemiBold.woff2 downloaded and wired via `next/font/local` in `app/layout.tsx`
 - [x] Tailwind CSS v4 + Turbopack fix — `@tailwindcss/postcss` installed, `postcss.config.mjs` added
+- [x] All 6 phases complete — v1 ready
 
 ## Prisma Client Note (pnpm monorepo)
 
