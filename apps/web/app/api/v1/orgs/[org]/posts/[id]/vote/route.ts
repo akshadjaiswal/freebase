@@ -3,10 +3,8 @@ import { createHash } from "crypto";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { errors, ok } from "@/lib/api";
-
-function getClientIp(request: NextRequest): string {
-  return request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-}
+import { verifyWidgetJwt } from "@/lib/jwt";
+import { getClientIp } from "@/lib/rate-limit";
 
 function buildFingerprint(ip: string, ua: string, orgId: string): string {
   return createHash("sha256").update(`${ip}|${ua}|${orgId}`).digest("hex");
@@ -14,7 +12,6 @@ function buildFingerprint(ip: string, ua: string, orgId: string): string {
 
 const voteSchema = z.object({
   email: z.string().email().optional(),
-  userId: z.string().optional(),
 });
 
 export async function POST(
@@ -25,7 +22,7 @@ export async function POST(
 
   const org = await prisma.organization.findUnique({
     where: { slug: orgSlug },
-    select: { id: true },
+    select: { id: true, secretKey: true },
   });
   if (!org) return errors.notFound("Organization not found.");
 
@@ -44,7 +41,14 @@ export async function POST(
 
   const parsed = voteSchema.safeParse(body);
   const voterEmail = parsed.success ? parsed.data.email : undefined;
-  const jwtUserId = parsed.success ? parsed.data.userId : undefined;
+
+  // userId only from verified JWT header — never from request body
+  let jwtUserId: string | null = null;
+  const widgetToken = request.headers.get("x-freebase-user");
+  if (widgetToken) {
+    const payload = await verifyWidgetJwt(widgetToken, org.secretKey);
+    if (payload) jwtUserId = payload.userId;
+  }
 
   const ip = getClientIp(request);
   const ua = request.headers.get("user-agent") ?? "unknown";
@@ -99,7 +103,7 @@ export async function DELETE(
 
   const org = await prisma.organization.findUnique({
     where: { slug: orgSlug },
-    select: { id: true },
+    select: { id: true, secretKey: true },
   });
   if (!org) return errors.notFound("Organization not found.");
 
@@ -118,7 +122,14 @@ export async function DELETE(
 
   const parsed = voteSchema.safeParse(body);
   const voterEmail = parsed.success ? parsed.data.email : undefined;
-  const jwtUserId = parsed.success ? parsed.data.userId : undefined;
+
+  // userId only from verified JWT header — never from request body
+  let jwtUserId: string | null = null;
+  const widgetToken = request.headers.get("x-freebase-user");
+  if (widgetToken) {
+    const payload = await verifyWidgetJwt(widgetToken, org.secretKey);
+    if (payload) jwtUserId = payload.userId;
+  }
 
   const ip = getClientIp(request);
   const ua = request.headers.get("user-agent") ?? "unknown";
