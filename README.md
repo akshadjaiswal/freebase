@@ -93,7 +93,7 @@ The JWT is signed server-side with your org's secret key (visible in Settings â†
 // Node.js â€” any jwt library works
 const jwt = require('jsonwebtoken');
 const token = jwt.sign(
-  { userId, email, name, orgId: 'your-org-slug' },
+  { userId, email, name, orgSlug: 'your-org-slug' },
   process.env.FREEBASE_WIDGET_SECRET,
   { expiresIn: '1h' }
 );
