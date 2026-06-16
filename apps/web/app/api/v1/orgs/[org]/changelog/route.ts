@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { verifyAdminAccess } from "@/lib/auth";
+import { verifyAdminAccess, verifyApiKey } from "@/lib/auth";
 import { errors, ok, encodeCursor, decodeCursor } from "@/lib/api";
 
 function tiptapToText(body: unknown): string {
@@ -45,6 +45,12 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ org:
 
   const validStatuses = ["draft", "published", "all"];
   if (!validStatuses.includes(status)) return errors.badRequest("Invalid status filter.");
+
+  if (status !== "published") {
+    const admin = await verifyAdminAccess(orgSlug).catch(() => null);
+    const apiAuth = admin ? null : await verifyApiKey(req.headers.get("authorization"), orgSlug).catch(() => null);
+    if (!admin && !apiAuth) return errors.unauthorized();
+  }
 
   const where = {
     orgId: org.id,
