@@ -17,6 +17,8 @@ export async function GET(
   });
   if (!org) return errors.notFound("Organization not found.");
 
+  const isAdmin = await verifyAdminAccess(orgSlug).catch(() => null);
+
   const post = await prisma.feedbackPost.findFirst({
     where: { id, orgId: org.id },
     include: {
@@ -34,7 +36,7 @@ export async function GET(
     votes: post.voteCount,
     commentCount: post._count.comments,
     category: post.category,
-    author: { email: post.authorEmail, name: post.authorName },
+    author: isAdmin ? { email: post.authorEmail, name: post.authorName } : { name: post.authorName ?? null },
     pinned: post.pinned,
     createdAt: post.createdAt,
     updatedAt: post.updatedAt,

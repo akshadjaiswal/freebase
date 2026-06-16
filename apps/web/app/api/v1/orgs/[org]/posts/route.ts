@@ -21,6 +21,8 @@ export async function GET(
   });
   if (!org) return errors.notFound("Organization not found.");
 
+  const isAdmin = await verifyAdminAccess(orgSlug).catch(() => null);
+
   const status = searchParams.get("status");
   const categoryId = searchParams.get("category");
   const sort = (searchParams.get("sort") ?? "votes") as typeof VALID_SORTS[number];
@@ -92,7 +94,7 @@ export async function GET(
       votes: p.voteCount,
       commentCount: p._count.comments,
       category: p.category,
-      author: { email: p.authorEmail, name: p.authorName },
+      author: isAdmin ? { email: p.authorEmail, name: p.authorName } : { name: p.authorName ?? null },
       pinned: p.pinned,
       createdAt: p.createdAt,
       updatedAt: p.updatedAt,

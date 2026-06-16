@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { errors, ok } from "@/lib/api";
+import { verifyAdminAccess } from "@/lib/auth";
 import { dispatchWebhook } from "@/lib/webhooks";
 
 export async function GET(
@@ -22,6 +23,8 @@ export async function GET(
   });
   if (!post) return errors.notFound("Post not found.");
 
+  const isAdmin = await verifyAdminAccess(orgSlug).catch(() => null);
+
   const comments = await prisma.feedbackComment.findMany({
     where: { postId },
     orderBy: { createdAt: "asc" },
@@ -31,7 +34,7 @@ export async function GET(
     data: comments.map((c: (typeof comments)[0]) => ({
       id: c.id,
       body: c.body,
-      author: { email: c.authorEmail, name: c.authorName },
+      author: isAdmin ? { email: c.authorEmail, name: c.authorName } : { name: c.authorName ?? null },
       createdAt: c.createdAt,
     })),
     pagination: { hasMore: false, total: comments.length },
