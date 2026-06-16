@@ -52,9 +52,9 @@ export async function POST(
     return errors.unauthorized("Invalid or expired JWT");
   }
 
-  // Validate orgId claim matches the route param
-  if (payload.orgId !== orgSlug) {
-    return errors.forbidden("JWT orgId does not match");
+  // Validate orgSlug claim matches the route param
+  if (payload.orgSlug !== orgSlug) {
+    return errors.forbidden("JWT orgSlug does not match");
   }
 
   // Return the verified identity — widget stores this and attaches to requests
