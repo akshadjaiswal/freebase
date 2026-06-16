@@ -1,8 +1,22 @@
 import { NextRequest } from "next/server";
+import { createHash } from "crypto";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { verifyAdminAccess } from "@/lib/auth";
 import { errors, ok } from "@/lib/api";
+
+function isAllowedWebhookUrl(raw: string): boolean {
+  try {
+    const u = new URL(raw);
+    if (u.protocol !== "https:") return false;
+    const h = u.hostname.toLowerCase();
+    if (h === "localhost" || h === "127.0.0.1" || h === "::1" || h === "0.0.0.0") return false;
+    if (/^10\./.test(h) || /^192\.168\./.test(h)) return false;
+    if (/^172\.(1[6-9]|2\d|30|31)\./.test(h)) return false;
+    if (h === "169.254.169.254" || h === "metadata.google.internal" || h === "metadata.azure.com") return false;
+    return true;
+  } catch { return false; }
+}
 
 const VALID_EVENTS = [
   "post.created",
@@ -51,12 +65,18 @@ export async function POST(
     return errors.badRequest(field?.message ?? "Invalid input.");
   }
 
+  if (!isAllowedWebhookUrl(parsed.data.url)) {
+    return errors.badRequest("Webhook URL must be a public HTTPS endpoint.");
+  }
+
+  const secretHash = createHash("sha256").update(parsed.data.secret).digest("hex");
+
   const webhook = await prisma.webhook.create({
     data: {
       orgId: session.org.id,
       url: parsed.data.url,
       events: parsed.data.events,
-      secret: parsed.data.secret,
+      secret: secretHash,
     },
   });
 
