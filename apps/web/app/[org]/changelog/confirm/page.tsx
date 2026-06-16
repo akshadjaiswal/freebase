@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { makeChangelogConfirmToken } from "@/lib/jwt";
+import { verifyChangelogConfirmToken } from "@/lib/jwt";
 import Link from "next/link";
 
 interface Props {
@@ -20,8 +20,7 @@ export default async function ChangelogConfirmPage({ params, searchParams }: Pro
     return <ConfirmResult orgSlug={orgSlug} success={false} message="Organization not found." />;
   }
 
-  const expected = makeChangelogConfirmToken(email, org.secretKey);
-  if (token !== expected) {
+  if (!verifyChangelogConfirmToken(token, email, org.secretKey)) {
     return <ConfirmResult orgSlug={orgSlug} success={false} message="Invalid or expired confirmation token." />;
   }
 

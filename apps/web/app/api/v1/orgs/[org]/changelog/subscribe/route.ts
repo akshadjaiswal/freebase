@@ -4,6 +4,15 @@ import { prisma } from "@/lib/prisma";
 import { errors, ok } from "@/lib/api";
 import { makeChangelogConfirmToken } from "@/lib/jwt";
 
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 const subscribeSchema = z.object({
   email: z.string().email(),
 });
@@ -50,7 +59,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ org
       from: `${org.name} <noreply@${process.env.EMAIL_FROM_DOMAIN}>`,
       to: email,
       subject: `Confirm your subscription to ${org.name} updates`,
-      html: `<p>Hi,</p><p>Click the link below to confirm your subscription to <strong>${org.name}</strong> changelog updates.</p><p><a href="${confirmUrl}">Confirm subscription →</a></p><p style="color:#666;font-size:12px;">If you didn't request this, ignore this email.</p>`,
+      html: `<p>Hi,</p><p>Click the link below to confirm your subscription to <strong>${escapeHtml(org.name)}</strong> changelog updates.</p><p><a href="${confirmUrl}">Confirm subscription →</a></p><p style="color:#666;font-size:12px;">If you didn't request this, ignore this email.</p>`,
     });
   } catch (e) {
     console.error("Failed to send confirmation email:", e);

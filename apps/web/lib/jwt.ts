@@ -2,13 +2,14 @@ import { createHmac, timingSafeEqual } from "crypto";
 import * as jose from "jose";
 
 // Widget JWT — signed by the host app using the org's secretKey (HMAC-SHA256)
-// Payload: { userId, email, name, orgId, iat, exp }
+// Payload: { userId, email, name, orgSlug, iat, exp }
+// orgSlug must equal the org's URL slug (not DB cuid)
 
 export interface WidgetJwtPayload {
   userId: string;
   email: string;
   name?: string;
-  orgId: string;
+  orgSlug: string;
   iat: number;
   exp: number;
 }
@@ -26,7 +27,7 @@ export async function verifyWidgetJwt(
     if (
       typeof payload.userId !== "string" ||
       typeof payload.email !== "string" ||
-      typeof payload.orgId !== "string"
+      typeof payload.orgSlug !== "string"
     ) {
       return null;
     }
@@ -67,9 +68,29 @@ export function verifyWebhookSignature(
   }
 }
 
-// Changelog subscription confirmation token — HMAC(email, orgSecretKey)
+// Changelog subscription confirmation token — timestamped HMAC, expires 48h
 export function makeChangelogConfirmToken(email: string, orgSecret: string): string {
-  return createHmac("sha256", orgSecret).update(email).digest("hex");
+  const ts = Math.floor(Date.now() / 1000).toString();
+  const sig = createHmac("sha256", orgSecret).update(`${email}:${ts}`).digest("hex");
+  return `${ts}.${sig}`;
+}
+
+export function verifyChangelogConfirmToken(
+  token: string,
+  email: string,
+  orgSecret: string
+): boolean {
+  const dot = token.indexOf(".");
+  if (dot === -1) return false;
+  const ts = token.slice(0, dot);
+  const sig = token.slice(dot + 1);
+  if (!ts || !sig) return false;
+  const age = Math.floor(Date.now() / 1000) - parseInt(ts, 10);
+  if (age > 48 * 3600 || age < 0) return false;
+  const expected = createHmac("sha256", orgSecret).update(`${email}:${ts}`).digest("hex");
+  try {
+    return timingSafeEqual(Buffer.from(sig), Buffer.from(expected));
+  } catch { return false; }
 }
 
 // Compute HMAC signature for outgoing webhooks

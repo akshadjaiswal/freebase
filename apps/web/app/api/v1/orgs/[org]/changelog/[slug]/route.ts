@@ -5,6 +5,15 @@ import { verifyAdminAccess } from "@/lib/auth";
 import { errors, ok } from "@/lib/api";
 import { dispatchWebhook } from "@/lib/webhooks";
 
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 type RouteParams = { params: Promise<{ org: string; slug: string }> };
 
 export async function GET(req: NextRequest, { params }: RouteParams) {
@@ -87,7 +96,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
               from: `${admin.org.name} <noreply@${process.env.EMAIL_FROM_DOMAIN}>`,
               to: sub.email,
               subject: `New update: ${finalTitle}`,
-              html: `<p>A new update was published by <strong>${admin.org.name}</strong>.</p><h2>${finalTitle}</h2><p><a href="${postUrl}">Read the full update →</a></p>`,
+              html: `<p>A new update was published by <strong>${escapeHtml(admin.org.name)}</strong>.</p><h2>${escapeHtml(finalTitle)}</h2><p><a href="${postUrl}">Read the full update →</a></p>`,
             })
           )
         );
