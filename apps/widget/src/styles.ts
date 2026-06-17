@@ -90,7 +90,7 @@ function buildCss(accent: string): string {
 
 .fb-btn-whats-new {
   position: fixed;
-  bottom: 80px;
+  bottom: 156px;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -148,7 +148,8 @@ function buildCss(accent: string): string {
   font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
   font-size: 14px;
   color: var(--fb-text);
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .fb-panel.fb-right { right: 0; border-left: 1px solid var(--fb-border); border-right: none; }
@@ -316,7 +317,7 @@ function buildCss(accent: string): string {
 
 .fb-popup.fb-right { right: 24px; }
 .fb-popup.fb-left  { left: 24px; }
-.fb-popup-bottom   { bottom: 88px; }
+.fb-popup-bottom   { bottom: 200px; }
 
 .fb-popup-header {
   display: flex;
