@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+const APP_HOST = (process.env.NEXT_PUBLIC_APP_URL ?? "https://freebase.app").replace(/^https?:\/\//, "");
+
 function slugify(value: string): string {
   return value
     .toLowerCase()
@@ -116,19 +118,19 @@ export default function NewOrgPage() {
                 — used in your org&apos;s public URL
               </span>
             </Label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-[var(--text-muted)] pointer-events-none select-none">
-                freebase.app/
+            <div className="flex items-center rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] focus-within:ring-1 focus-within:ring-[var(--accent)] focus-within:border-[var(--accent)] transition-colors">
+              <span className="pl-3 shrink-0 text-xs text-[var(--text-muted)] pointer-events-none select-none whitespace-nowrap">
+                {APP_HOST}/
               </span>
-              <Input
+              <input
                 id="slug"
                 placeholder="acme"
                 value={slug}
                 onChange={(e) => handleSlugChange(e.target.value)}
-                error={errors.slug}
-                className="pl-[88px]"
+                className="min-w-0 flex-1 bg-transparent py-2 pr-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none"
               />
             </div>
+            {errors.slug && <p className="text-xs text-[var(--error)] mt-1">{errors.slug}</p>}
           </div>
 
           <div className="h-px bg-[var(--border)]" />

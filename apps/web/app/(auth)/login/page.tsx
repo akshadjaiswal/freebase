@@ -36,6 +36,17 @@ function LoginForm() {
         return;
       }
 
+      // If no explicit next destination, look up the user's org and go to admin
+      if (next === "/") {
+        const res = await fetch("/api/auth/me");
+        if (res.ok) {
+          const data = await res.json();
+          router.push(`/${data.orgSlug}/admin`);
+          router.refresh();
+          return;
+        }
+      }
+
       router.push(next);
       router.refresh();
     });

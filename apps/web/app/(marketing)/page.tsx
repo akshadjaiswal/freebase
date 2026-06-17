@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { WidgetDemo } from "@/components/widget-demo";
 
 const DEMO_ORG = process.env.NEXT_PUBLIC_WIDGET_DEMO_ORG ?? "";
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://freebase.app";
 
 export default function HomePage() {
   return (
@@ -120,7 +121,7 @@ export default function HomePage() {
           </p>
           <div className="rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] p-4 text-left">
             <pre className="overflow-x-auto font-mono text-xs text-[var(--text-secondary)]">
-              <code>{`<script src="https://freebase.app/cdn/v1/sdk.js" async></script>
+              <code>{`<script src="${APP_URL}/cdn/v1/sdk.js" async></script>
 <script>
   window.Freebase?.('init', { org: 'your-org' })
 </script>`}</code>
