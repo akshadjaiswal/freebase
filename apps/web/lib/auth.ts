@@ -1,9 +1,10 @@
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { createHash } from "crypto";
 
-// Verify the authenticated admin has access to the given org slug
-export async function verifyAdminAccess(orgSlug: string) {
+// Per-request memoized: layout + page both call this, only one DB hit per render
+export const verifyAdminAccess = cache(async function verifyAdminAccess(orgSlug: string) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -17,7 +18,7 @@ export async function verifyAdminAccess(orgSlug: string) {
   if (!dbUser || dbUser.org.slug !== orgSlug) return null;
 
   return { user, dbUser, org: dbUser.org };
-}
+});
 
 // Verify API key Bearer token — returns org if valid, null otherwise
 export async function verifyApiKey(
