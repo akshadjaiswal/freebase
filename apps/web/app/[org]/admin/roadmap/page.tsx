@@ -13,22 +13,16 @@ export default async function AdminRoadmapPage({ params }: Props) {
   const session = await verifyAdminAccess(orgSlug);
   if (!session) redirect(`/login?next=/${orgSlug}/admin/roadmap`);
 
-  const org = await prisma.organization.findUnique({
-    where: { slug: orgSlug },
-    select: { id: true },
-  });
-  if (!org) redirect("/login");
-
   const [items, feedbackPosts] = await Promise.all([
     prisma.roadmapItem.findMany({
-      where: { orgId: org.id },
+      where: { orgId: session.org.id },
       orderBy: [{ position: "asc" }],
       include: {
         feedbackPost: { select: { voteCount: true } },
       },
     }),
     prisma.feedbackPost.findMany({
-      where: { orgId: org.id },
+      where: { orgId: session.org.id },
       orderBy: { voteCount: "desc" },
       select: {
         id: true,

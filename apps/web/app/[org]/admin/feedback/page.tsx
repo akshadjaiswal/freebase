@@ -1,4 +1,6 @@
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { verifyAdminAccess } from "@/lib/auth";
 import { AdminFeedbackClient } from "./admin-feedback-client";
 
 interface Props {
@@ -8,14 +10,12 @@ interface Props {
 export default async function AdminFeedbackPage({ params }: Props) {
   const { org: orgSlug } = await params;
 
-  const org = await prisma.organization.findUnique({
-    where: { slug: orgSlug },
-    select: { id: true },
-  });
+  const session = await verifyAdminAccess(orgSlug);
+  if (!session) redirect(`/login?org=${orgSlug}`);
 
   const [posts, categories] = await Promise.all([
     prisma.feedbackPost.findMany({
-      where: { orgId: org!.id },
+      where: { orgId: session.org.id },
       orderBy: [{ pinned: "desc" }, { voteCount: "desc" }, { createdAt: "desc" }],
       include: {
         category: { select: { id: true, name: true, color: true } },
@@ -23,7 +23,7 @@ export default async function AdminFeedbackPage({ params }: Props) {
       },
     }),
     prisma.category.findMany({
-      where: { orgId: org!.id },
+      where: { orgId: session.org.id },
       orderBy: { name: "asc" },
     }),
   ]);
