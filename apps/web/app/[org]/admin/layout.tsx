@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import { ThemeProvider } from "next-themes";
-import { createClient } from "@/lib/supabase/server";
-import { prisma } from "@/lib/prisma";
+import { verifyAdminAccess } from "@/lib/auth";
 import { Sidebar } from "@/components/layout/sidebar";
 import { CommandPalette } from "@/components/layout/command-palette";
 
@@ -12,22 +11,10 @@ interface AdminLayoutProps {
 
 export default async function AdminLayout({ children, params }: AdminLayoutProps) {
   const { org: orgSlug } = await params;
-  const supabase = await createClient();
 
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
+  const session = await verifyAdminAccess(orgSlug);
+  if (!session) {
     redirect(`/login?org=${orgSlug}`);
-  }
-
-  // Verify user belongs to this org
-  const dbUser = await prisma.user.findFirst({
-    where: { id: user.id },
-    include: { org: { select: { slug: true, name: true } } },
-  });
-
-  if (!dbUser || dbUser.org.slug !== orgSlug) {
-    redirect("/login");
   }
 
   return (
@@ -40,8 +27,8 @@ export default async function AdminLayout({ children, params }: AdminLayoutProps
       <div className="flex h-screen overflow-hidden bg-[var(--background)]">
         <Sidebar
           orgSlug={orgSlug}
-          orgName={dbUser.org.name}
-          userEmail={dbUser.email}
+          orgName={session.org.name}
+          userEmail={session.dbUser.email}
         />
         <main className="flex-1 overflow-y-auto">
           {children}
