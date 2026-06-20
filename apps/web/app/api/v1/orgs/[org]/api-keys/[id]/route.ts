@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { verifyAdminAccess } from "@/lib/auth";
 import { errors } from "@/lib/api";
@@ -15,6 +16,8 @@ export async function DELETE(
   if (!apiKey || apiKey.orgId !== session.org.id) return errors.notFound("API key not found.");
 
   await prisma.apiKey.delete({ where: { id } });
+
+  revalidateTag(`settings-${session.org.id}`);
 
   return new Response(null, { status: 204 });
 }

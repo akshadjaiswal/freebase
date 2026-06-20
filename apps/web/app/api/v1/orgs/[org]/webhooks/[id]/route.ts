@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
+import { revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { verifyAdminAccess } from "@/lib/auth";
 import { errors, ok } from "@/lib/api";
@@ -29,6 +30,8 @@ export async function PATCH(
     select: { id: true, url: true, events: true, active: true, createdAt: true },
   });
 
+  revalidateTag(`settings-${session.org.id}`);
+
   return ok(updated);
 }
 
@@ -44,6 +47,8 @@ export async function DELETE(
   if (!webhook || webhook.orgId !== session.org.id) return errors.notFound("Webhook not found.");
 
   await prisma.webhook.delete({ where: { id } });
+
+  revalidateTag(`settings-${session.org.id}`);
 
   return new Response(null, { status: 204 });
 }

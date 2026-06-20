@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { randomBytes } from "crypto";
 import { z } from "zod";
+import { revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { verifyAdminAccess } from "@/lib/auth";
 import { errors, ok } from "@/lib/api";
@@ -56,6 +57,8 @@ export async function PATCH(
     data: updateData,
     select: { id: true, name: true, slug: true, accentColor: true, secretKey: true },
   });
+
+  revalidateTag(`org-${session.org.id}`);
 
   return ok(updated);
 }

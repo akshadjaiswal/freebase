@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { createHash } from "crypto";
 import { z } from "zod";
+import { revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { verifyAdminAccess } from "@/lib/auth";
 import { errors, ok } from "@/lib/api";
@@ -79,6 +80,8 @@ export async function POST(
       secret: secretHash,
     },
   });
+
+  revalidateTag(`settings-${session.org.id}`);
 
   return ok(
     {
