@@ -12,7 +12,10 @@ const nextConfig: NextConfig = {
 
   // Experimental features
   experimental: {
-    // Use pnpm workspace package imports
+    staleTimes: {
+      dynamic: 300, // 5 min — admin [org] pages cached client-side (default: 30s)
+      static: 300,
+    },
   },
 
   // Image optimization config
