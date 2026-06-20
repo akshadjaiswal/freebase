@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
+import { revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { errors, ok } from "@/lib/api";
 import { verifyAdminAccess } from "@/lib/auth";
@@ -92,6 +93,8 @@ export async function PATCH(
     },
   });
 
+  revalidateTag(`feedback-${admin.org.id}`);
+
   // Sync linked roadmap item status when post status changes
   if (parsed.data.status && parsed.data.status !== previousStatus) {
     const statusMap: Record<string, string> = {
@@ -105,6 +108,7 @@ export async function PATCH(
         where: { feedbackPostId: id },
         data: { status: roadmapStatus },
       });
+      revalidateTag(`roadmap-${admin.org.id}`);
     }
 
     dispatchWebhook(admin.org.id, {
@@ -148,6 +152,8 @@ export async function DELETE(
   if (!post) return errors.notFound("Post not found.");
 
   await prisma.feedbackPost.delete({ where: { id } });
+
+  revalidateTag(`feedback-${admin.org.id}`);
 
   return new Response(null, { status: 204 });
 }

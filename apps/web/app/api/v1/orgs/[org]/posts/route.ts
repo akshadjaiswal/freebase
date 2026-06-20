@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
+import { revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { errors, ok, encodeCursor, decodeCursor } from "@/lib/api";
 import { verifyAdminAccess } from "@/lib/auth";
@@ -174,6 +175,8 @@ export async function POST(
     createdAt: post.createdAt,
     updatedAt: post.updatedAt,
   };
+
+  revalidateTag(`feedback-${org.id}`);
 
   dispatchWebhook(org.id, {
     event: "post.created",
