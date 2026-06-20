@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import localFont from "next/font/local";
 import { ThemeProvider } from "next-themes";
 import { Toaster } from "sonner";
+import NextTopLoader from "nextjs-toploader";
 import "./globals.css";
 
 const inter = Inter({
@@ -49,6 +50,12 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
+          <NextTopLoader
+            color="#10b981"
+            height={2}
+            shadow={false}
+            showSpinner={false}
+          />
           {children}
           <Toaster
             position="bottom-right"
