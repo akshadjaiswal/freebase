@@ -93,7 +93,7 @@ The JWT is signed server-side with your org's secret key (visible in Settings �
 // Node.js — any jwt library works
 const jwt = require('jsonwebtoken');
 const token = jwt.sign(
-  { userId, email, name, orgSlug: 'your-org-slug' },
+  { userId, email, name, orgSlug: 'your-org-slug' },  // orgSlug must match your org's URL slug
   process.env.FREEBASE_WIDGET_SECRET,
   { expiresIn: '1h' }
 );
@@ -138,10 +138,12 @@ X-Freebase-Event: post.status_changed
 Verify in your receiver:
 
 ```js
-const { createHmac, timingSafeEqual } = require('crypto');
+const { createHash, createHmac, timingSafeEqual } = require('crypto');
 
 function verify(rawBody, timestamp, signature, secret) {
-  const expected = 'sha256=' + createHmac('sha256', secret)
+  // Freebase stores secrets hashed — HMAC key is SHA-256(secret)
+  const key = createHash('sha256').update(secret).digest('hex');
+  const expected = 'sha256=' + createHmac('sha256', key)
     .update(`${timestamp}.${rawBody}`)
     .digest('hex');
   return timingSafeEqual(Buffer.from(signature), Buffer.from(expected));

@@ -32,6 +32,7 @@ This file is the primary context for building Freebase. Read it at the start of 
 | Theme | next-themes |
 | Validation | Zod |
 | Command palette | cmdk (Phase 6) |
+| Nav progress bar | nextjs-toploader |
 
 ---
 
@@ -73,7 +74,8 @@ This file is the primary context for building Freebase. Read it at the start of 
 - `apps/web/lib/supabase/server.ts` — server Supabase client
 - `apps/web/lib/supabase/client.ts` — browser Supabase client
 - `apps/web/lib/supabase/middleware.ts` — session refresh helper
-- `apps/web/lib/auth.ts` — verifyAdminAccess(), verifyApiKey()
+- `apps/web/lib/auth.ts` — verifyAdminAccess() wrapped with React.cache() (per-request memoized), verifyApiKey()
+- `apps/web/lib/data.ts` — unstable_cache wrappers for admin page data (getFeedbackPageData, getChangelogPageData, getRoadmapPageData, getSettingsPageData) — tagged for revalidation
 - `apps/web/lib/api.ts` — RFC 9457 error helpers, cursor pagination
 - `apps/web/lib/jwt.ts` — widget JWT verify, webhook HMAC
 - `apps/web/lib/rate-limit.ts` — Upstash rate limiter instances
@@ -173,7 +175,7 @@ SDK boots → drains the `.q` queue → replaces the stub.
 - `apps/web/components/layout/command-palette.tsx` — cmdk `⌘K` palette: 2+ char query → live feedback post search via `/api/v1/orgs/[org]/posts?q=...`; empty query → nav/create/public-pages groups
 - `docker-compose.yml` — Postgres + web service, single `docker compose up -d`
 - `Dockerfile` — multi-stage: deps → widget build → web build → standalone runner
-- `apps/web/next.config.ts` — `output: "standalone"` when `DOCKER_BUILD=true`
+- `apps/web/next.config.ts` — `output: "standalone"` when `DOCKER_BUILD=true`; `staleTimes: { dynamic: 300, static: 300 }` for Router Cache
 
 **Settings page sections (in order):**
 1. Organization — name (editable), slug (read-only), accent color (color picker)
@@ -241,6 +243,7 @@ pnpm db:push
 
 - **Supabase Auth only** — `users` table in Neon has `id = Supabase Auth UID`
 - Admin access check: `verifyAdminAccess(orgSlug)` in `lib/auth.ts`
+  - Wrapped with `React.cache()` — layout + page both call it, only one DB hit per render
   - Verifies Supabase session → looks up user in Neon → checks org.slug matches route
 - API key check: `verifyApiKey(authHeader, orgSlug)` in `lib/auth.ts`
   - SHA-256 hashes incoming key → looks up in `api_keys` table → checks org match
@@ -262,11 +265,12 @@ pnpm db:push
 ## Voting Dedup (Phase 2)
 
 Priority order (check in this sequence):
-1. JWT identified — `userId` from widget `identify` call → `user_id + post_id` unique
+1. JWT identified — `userId` extracted from `X-Freebase-User` header (verified HMAC JWT, not request body) → `user_id + post_id` unique
 2. Email known — from request body → `voterEmail + post_id` unique
 3. Anonymous — `SHA256(IP + User-Agent + orgId)` → `voterFingerprint + post_id` unique
 
 At least one of the three unique constraints will always be set.
+`userId` from request body was removed (security fix) — only trusted JWT header is used.
 
 ---
 
@@ -325,11 +329,11 @@ After build: `pnpm --filter widget build && cp apps/widget/dist/sdk.js apps/web/
 # Install
 pnpm install
 
-# Copy env vars
-cp .env.example .env.local
+# Copy env vars — MUST be in apps/web/, not repo root
+cp .env.example apps/web/.env.local
 # Fill in: DATABASE_URL, DATABASE_URL_UNPOOLED, NEXT_PUBLIC_SUPABASE_URL,
 #          NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY,
-#          UPSTASH_REDIS_REST_URL, UPSTASH_REDIS_REST_TOKEN
+#          UPSTASH_REDIS_REST_URL, UPSTASH_REDIS_REST_TOKEN, NEXT_PUBLIC_APP_URL
 
 # Run DB migration
 DATABASE_URL=$DATABASE_URL_UNPOOLED pnpm db:migrate
@@ -361,11 +365,10 @@ All decisions are locked in `/research/`:
 
 - [ ] Rate limiting gracefully skipped if Upstash not configured (returns null limiter)
 - [ ] Delete org Supabase user cleanup uses dynamic import of `@supabase/supabase-js` admin client — works but not tree-shaken; acceptable for a rare operation
-- [x] Docker `standalone` output — `DOCKER_BUILD=true` set in Dockerfile build stage, `output: "standalone"` conditional in `next.config.ts`
-- [x] Phase 2 feedback board — public + admin + API — DONE
-- [x] CalSans-SemiBold.woff2 downloaded and wired via `next/font/local` in `app/layout.tsx`
-- [x] Tailwind CSS v4 + Turbopack fix — `@tailwindcss/postcss` installed, `postcss.config.mjs` added
 - [x] All 6 phases complete — v1 ready
+- [x] Security: 8 vulns fixed (draft changelog exposure, vote dedup bypass, SSRF, email leakage, webhook secret hashing, HTML injection, token expiry, orgSlug naming)
+- [x] Performance: React.cache() on verifyAdminAccess, unstable_cache on page data, Router Cache TTL 5min, revalidateTag on all mutations
+- [x] UX: top navigation progress bar (nextjs-toploader), login redirect to org admin, widget button stacking fixed
 
 ## Prisma Client Note (pnpm monorepo)
 
