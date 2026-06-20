@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
-import { prisma } from "@/lib/prisma";
 import { verifyAdminAccess } from "@/lib/auth";
+import { getRoadmapPageData } from "@/lib/data";
 import { AdminRoadmapClient } from "@/components/roadmap/admin-roadmap-client";
 
 interface Props {
@@ -13,25 +13,7 @@ export default async function AdminRoadmapPage({ params }: Props) {
   const session = await verifyAdminAccess(orgSlug);
   if (!session) redirect(`/login?next=/${orgSlug}/admin/roadmap`);
 
-  const [items, feedbackPosts] = await Promise.all([
-    prisma.roadmapItem.findMany({
-      where: { orgId: session.org.id },
-      orderBy: [{ position: "asc" }],
-      include: {
-        feedbackPost: { select: { voteCount: true } },
-      },
-    }),
-    prisma.feedbackPost.findMany({
-      where: { orgId: session.org.id },
-      orderBy: { voteCount: "desc" },
-      select: {
-        id: true,
-        title: true,
-        voteCount: true,
-        status: true,
-      },
-    }),
-  ]);
+  const { items, feedbackPosts } = await getRoadmapPageData(session.org.id);
 
   const format = (item: typeof items[number]) => ({
     id: item.id,

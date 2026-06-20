@@ -1,7 +1,7 @@
-import { notFound, redirect } from "next/navigation";
+import { redirect } from "next/navigation";
 import Link from "next/link";
-import { prisma } from "@/lib/prisma";
 import { verifyAdminAccess } from "@/lib/auth";
+import { getChangelogPageData } from "@/lib/data";
 import { LabelBadge } from "@/components/changelog/changelog-entry";
 import { Plus, FileText } from "lucide-react";
 
@@ -15,10 +15,7 @@ export default async function AdminChangelogPage({ params }: Props) {
   const admin = await verifyAdminAccess(orgSlug);
   if (!admin) redirect("/login");
 
-  const posts = await prisma.changelogPost.findMany({
-    where: { orgId: admin.org.id },
-    orderBy: [{ createdAt: "desc" }],
-  });
+  const posts = await getChangelogPageData(admin.org.id);
 
   return (
     <div className="p-8">
@@ -65,7 +62,7 @@ export default async function AdminChangelogPage({ params }: Props) {
             </thead>
             <tbody className="divide-y divide-[var(--border)] bg-[var(--surface)]">
               {posts.map((post) => {
-                const date = (post.publishedAt ?? post.createdAt).toLocaleDateString("en-US", {
+                const date = new Date(post.publishedAt ?? post.createdAt).toLocaleDateString("en-US", {
                   month: "short",
                   day: "numeric",
                   year: "numeric",

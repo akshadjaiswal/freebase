@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
-import { prisma } from "@/lib/prisma";
 import { verifyAdminAccess } from "@/lib/auth";
+import { getSettingsPageData } from "@/lib/data";
 import { SettingsClient } from "./settings-client";
 
 interface Props {
@@ -13,18 +13,7 @@ export default async function AdminSettingsPage({ params }: Props) {
   const session = await verifyAdminAccess(orgSlug);
   if (!session) redirect(`/login?org=${orgSlug}`);
 
-  const [apiKeys, webhooks] = await Promise.all([
-    prisma.apiKey.findMany({
-      where: { orgId: session.org.id },
-      select: { id: true, name: true, keyPrefix: true, lastUsedAt: true, createdAt: true },
-      orderBy: { createdAt: "desc" },
-    }),
-    prisma.webhook.findMany({
-      where: { orgId: session.org.id },
-      select: { id: true, url: true, events: true, active: true, createdAt: true },
-      orderBy: { createdAt: "desc" },
-    }),
-  ]);
+  const { apiKeys, webhooks } = await getSettingsPageData(session.org.id);
 
   return (
     <div className="p-8">
@@ -45,12 +34,12 @@ export default async function AdminSettingsPage({ params }: Props) {
         }}
         apiKeys={apiKeys.map((k) => ({
           ...k,
-          lastUsedAt: k.lastUsedAt?.toISOString() ?? null,
-          createdAt: k.createdAt.toISOString(),
+          lastUsedAt: k.lastUsedAt ? new Date(k.lastUsedAt).toISOString() : null,
+          createdAt: new Date(k.createdAt).toISOString(),
         }))}
         webhooks={webhooks.map((w) => ({
           ...w,
-          createdAt: w.createdAt.toISOString(),
+          createdAt: new Date(w.createdAt).toISOString(),
         }))}
         emailEnabled={!!(process.env.RESEND_API_KEY && process.env.EMAIL_FROM_DOMAIN)}
       />
