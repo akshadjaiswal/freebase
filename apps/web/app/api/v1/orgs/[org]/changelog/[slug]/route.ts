@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
+import { revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { verifyAdminAccess } from "@/lib/auth";
 import { errors, ok } from "@/lib/api";
@@ -104,6 +105,8 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
       .catch((e) => console.error("Failed to send subscriber emails:", e));
   }
 
+  revalidateTag(`changelog-${admin.org.id}`);
+
   if (isPublishing) {
     dispatchWebhook(admin.org.id, {
       event: "changelog.published",
@@ -127,6 +130,8 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
   if (!post) return errors.notFound("Changelog post not found.");
 
   await prisma.changelogPost.delete({ where: { id: post.id } });
+
+  revalidateTag(`changelog-${admin.org.id}`);
 
   return new Response(null, { status: 204 });
 }

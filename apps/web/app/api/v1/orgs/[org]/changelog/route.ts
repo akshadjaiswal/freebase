@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
+import { revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { verifyAdminAccess, verifyApiKey } from "@/lib/auth";
 import { errors, ok, encodeCursor, decodeCursor } from "@/lib/api";
@@ -158,6 +159,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ org
       publishedAt: status === "published" ? new Date() : null,
     },
   });
+
+  revalidateTag(`changelog-${admin.org.id}`);
 
   return ok(post, 201);
 }

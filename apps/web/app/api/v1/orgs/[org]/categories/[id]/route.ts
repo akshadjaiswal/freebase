@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { errors } from "@/lib/api";
 import { verifyAdminAccess } from "@/lib/auth";
@@ -18,6 +19,8 @@ export async function DELETE(
   if (!category) return errors.notFound("Category not found.");
 
   await prisma.category.delete({ where: { id } });
+
+  revalidateTag(`feedback-${admin.org.id}`);
 
   return new Response(null, { status: 204 });
 }

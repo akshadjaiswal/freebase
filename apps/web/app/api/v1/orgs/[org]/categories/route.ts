@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
+import { revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { errors, ok } from "@/lib/api";
 import { verifyAdminAccess } from "@/lib/auth";
@@ -69,6 +70,8 @@ export async function POST(
       color: parsed.data.color,
     },
   });
+
+  revalidateTag(`feedback-${admin.org.id}`);
 
   return ok({ id: category.id, name: category.name, color: category.color }, 201);
 }

@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
+import { revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { errors, ok } from "@/lib/api";
 import { verifyAdminAccess } from "@/lib/auth";
@@ -72,6 +73,8 @@ export async function PATCH(
     },
   });
 
+  revalidateTag(`roadmap-${org.id}`);
+
   // Sync linked feedback post status when roadmap status changes
   if (statusChanged && updated.feedbackPostId) {
     const newFeedbackStatus = roadmapToFeedbackStatus[updates.status!];
@@ -80,6 +83,7 @@ export async function PATCH(
         where: { id: updated.feedbackPostId },
         data: { status: newFeedbackStatus },
       });
+      revalidateTag(`feedback-${org.id}`);
     }
   }
 
@@ -118,6 +122,8 @@ export async function DELETE(
   if (!item) return errors.notFound("Roadmap item not found");
 
   await prisma.roadmapItem.delete({ where: { id } });
+
+  revalidateTag(`roadmap-${org.id}`);
 
   return new Response(null, { status: 204 });
 }

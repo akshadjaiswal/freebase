@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
+import { revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { errors, ok } from "@/lib/api";
 import { verifyAdminAccess } from "@/lib/auth";
@@ -147,6 +148,8 @@ export async function POST(
       feedbackPost: { select: { id: true, voteCount: true } },
     },
   });
+
+  revalidateTag(`roadmap-${org.id}`);
 
   return ok(
     {
