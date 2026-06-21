@@ -78,3 +78,56 @@ export const getSettingsPageData = (orgId: string) =>
     [`settings-${orgId}`],
     { tags: [`org-${orgId}`, `settings-${orgId}`] }
   )();
+
+// Public pages
+
+export const getOrgBySlug = (slug: string) =>
+  unstable_cache(
+    async () =>
+      prisma.organization.findUnique({
+        where: { slug },
+        select: { id: true, name: true, accentColor: true, logoUrl: true },
+      }),
+    [`org-slug-${slug}`],
+    { tags: [`org-slug-${slug}`], revalidate: 300 }
+  )();
+
+export const getPublicFeedbackPageData = (orgId: string) =>
+  unstable_cache(
+    async () => {
+      const categories = await prisma.category.findMany({
+        where: { orgId },
+        orderBy: { name: "asc" },
+        select: { id: true, name: true, color: true },
+      });
+      return { categories };
+    },
+    [`public-feedback-${orgId}`],
+    { tags: [`org-${orgId}`, `feedback-${orgId}`], revalidate: 30 }
+  )();
+
+export const getPublicChangelogPageData = (orgId: string) =>
+  unstable_cache(
+    async () =>
+      prisma.changelogPost.findMany({
+        where: { orgId, status: "published" },
+        orderBy: { publishedAt: "desc" },
+        take: 50,
+      }),
+    [`public-changelog-${orgId}`],
+    { tags: [`org-${orgId}`, `changelog-${orgId}`], revalidate: 30 }
+  )();
+
+export const getPublicRoadmapPageData = (orgId: string) =>
+  unstable_cache(
+    async () =>
+      prisma.roadmapItem.findMany({
+        where: { orgId, visible: true },
+        orderBy: [{ position: "asc" }],
+        include: {
+          feedbackPost: { select: { voteCount: true } },
+        },
+      }),
+    [`public-roadmap-${orgId}`],
+    { tags: [`org-${orgId}`, `roadmap-${orgId}`], revalidate: 30 }
+  )();
