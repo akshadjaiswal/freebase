@@ -1,9 +1,9 @@
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { prisma } from "@/lib/prisma";
 import { Topbar } from "@/components/layout/topbar";
 import { FeedbackBoard } from "./feedback-board";
 import { ThemeProvider } from "next-themes";
+import { getOrgBySlug, getPublicFeedbackPageData } from "@/lib/data";
 
 interface Props {
   params: Promise<{ org: string }>;
@@ -16,10 +16,7 @@ interface Props {
 
 export async function generateMetadata({ params }: Props) {
   const { org: orgSlug } = await params;
-  const org = await prisma.organization.findUnique({
-    where: { slug: orgSlug },
-    select: { name: true },
-  });
+  const org = await getOrgBySlug(orgSlug);
   if (!org) return {};
   return { title: `${org.name} — Feedback` };
 }
@@ -28,17 +25,10 @@ export default async function FeedbackPage({ params, searchParams }: Props) {
   const { org: orgSlug } = await params;
   const sp = await searchParams;
 
-  const org = await prisma.organization.findUnique({
-    where: { slug: orgSlug },
-    select: { id: true, name: true, logoUrl: true },
-  });
+  const org = await getOrgBySlug(orgSlug);
   if (!org) notFound();
 
-  const categories = await prisma.category.findMany({
-    where: { orgId: org.id },
-    orderBy: { name: "asc" },
-    select: { id: true, name: true, color: true },
-  });
+  const { categories } = await getPublicFeedbackPageData(org.id);
 
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>

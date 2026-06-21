@@ -1,9 +1,9 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { prisma } from "@/lib/prisma";
 import { Topbar } from "@/components/layout/topbar";
 import { ChangelogEntry } from "@/components/changelog/changelog-entry";
 import { SubscribeButton } from "@/components/changelog/subscribe-button";
+import { getOrgBySlug, getPublicChangelogPageData } from "@/lib/data";
 
 interface Props {
   params: Promise<{ org: string }>;
@@ -11,7 +11,7 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { org: orgSlug } = await params;
-  const org = await prisma.organization.findUnique({ where: { slug: orgSlug }, select: { name: true } });
+  const org = await getOrgBySlug(orgSlug);
   if (!org) return {};
   return { title: `${org.name} — Changelog` };
 }
@@ -19,22 +19,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function ChangelogPage({ params }: Props) {
   const { org: orgSlug } = await params;
 
-  const org = await prisma.organization.findUnique({
-    where: { slug: orgSlug },
-    select: { id: true, name: true, accentColor: true },
-  });
+  const org = await getOrgBySlug(orgSlug);
   if (!org) notFound();
 
-  const posts = await prisma.changelogPost.findMany({
-    where: { orgId: org.id, status: "published" },
-    orderBy: { publishedAt: "desc" },
-    take: 50,
-  });
+  const posts = await getPublicChangelogPageData(org.id);
 
   // Group by year-month
   const groups: { key: string; label: string; posts: typeof posts }[] = [];
   for (const post of posts) {
-    const d = post.publishedAt ?? post.createdAt;
+    const d = new Date(post.publishedAt ?? post.createdAt);
     const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
     const label = new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric" }).format(d);
     const existing = groups.find((g) => g.key === key);

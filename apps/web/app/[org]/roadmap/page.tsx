@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { prisma } from "@/lib/prisma";
 import { Topbar } from "@/components/layout/topbar";
 import { KanbanColumn } from "@/components/roadmap/kanban-column";
+import { getOrgBySlug, getPublicRoadmapPageData } from "@/lib/data";
 
 interface Props {
   params: Promise<{ org: string }>;
@@ -10,10 +10,7 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { org: orgSlug } = await params;
-  const org = await prisma.organization.findUnique({
-    where: { slug: orgSlug },
-    select: { name: true },
-  });
+  const org = await getOrgBySlug(orgSlug);
   if (!org) return {};
   return { title: `${org.name} — Roadmap` };
 }
@@ -21,19 +18,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function RoadmapPage({ params }: Props) {
   const { org: orgSlug } = await params;
 
-  const org = await prisma.organization.findUnique({
-    where: { slug: orgSlug },
-    select: { id: true, name: true, logoUrl: true },
-  });
+  const org = await getOrgBySlug(orgSlug);
   if (!org) notFound();
 
-  const items = await prisma.roadmapItem.findMany({
-    where: { orgId: org.id, visible: true },
-    orderBy: [{ position: "asc" }],
-    include: {
-      feedbackPost: { select: { voteCount: true } },
-    },
-  });
+  const items = await getPublicRoadmapPageData(org.id);
 
   const format = (item: typeof items[number]) => ({
     id: item.id,

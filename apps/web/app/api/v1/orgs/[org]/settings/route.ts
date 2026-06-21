@@ -59,6 +59,7 @@ export async function PATCH(
   });
 
   revalidateTag(`org-${session.org.id}`);
+  revalidateTag(`org-slug-${session.org.slug}`);
 
   return ok(updated);
 }
