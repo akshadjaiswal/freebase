@@ -75,7 +75,7 @@ This file is the primary context for building Freebase. Read it at the start of 
 - `apps/web/lib/supabase/client.ts` — browser Supabase client
 - `apps/web/lib/supabase/middleware.ts` — session refresh helper
 - `apps/web/lib/auth.ts` — verifyAdminAccess() wrapped with React.cache() (per-request memoized), verifyApiKey()
-- `apps/web/lib/data.ts` — unstable_cache wrappers for admin page data (getFeedbackPageData, getChangelogPageData, getRoadmapPageData, getSettingsPageData) — tagged for revalidation
+- `apps/web/lib/data.ts` — unstable_cache wrappers for all page data. Admin: getFeedbackPageData, getChangelogPageData, getRoadmapPageData, getSettingsPageData. Public: getOrgBySlug (300s TTL), getPublicFeedbackPageData, getPublicChangelogPageData, getPublicRoadmapPageData (30s TTL) — all tagged for revalidation
 - `apps/web/lib/api.ts` — RFC 9457 error helpers, cursor pagination
 - `apps/web/lib/jwt.ts` — widget JWT verify, webhook HMAC
 - `apps/web/lib/rate-limit.ts` — Upstash rate limiter instances
@@ -367,7 +367,7 @@ All decisions are locked in `/research/`:
 - [ ] Delete org Supabase user cleanup uses dynamic import of `@supabase/supabase-js` admin client — works but not tree-shaken; acceptable for a rare operation
 - [x] All 6 phases complete — v1 ready
 - [x] Security: 8 vulns fixed (draft changelog exposure, vote dedup bypass, SSRF, email leakage, webhook secret hashing, HTML injection, token expiry, orgSlug naming)
-- [x] Performance: React.cache() on verifyAdminAccess, unstable_cache on page data, Router Cache TTL 5min, revalidateTag on all mutations
+- [x] Performance: React.cache() on verifyAdminAccess, unstable_cache on all admin + public page data, Router Cache TTL 5min, revalidateTag on all mutations
 - [x] UX: top navigation progress bar (nextjs-toploader), login redirect to org admin, widget button stacking fixed
 
 ## Prisma Client Note (pnpm monorepo)
