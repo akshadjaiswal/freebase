@@ -520,86 +520,93 @@ export function AdminFeedbackClient({ orgSlug, initialPosts, initialCategories }
 
       {/* Post detail dialog */}
       <Dialog open={!!detailPost} onOpenChange={(open) => !open && setDetailPost(null)}>
-        <DialogContent className="max-w-xl max-h-[85vh] flex flex-col">
-          {detailPost && (
-            <>
-              <DialogHeader>
-                <DialogTitle className="text-base leading-snug pr-6">{detailPost.title}</DialogTitle>
-                <DialogDescription className="flex flex-wrap items-center gap-2 mt-1">
-                  <StatusBadge status={detailPost.status} />
-                  {detailPost.category && (
-                    <span
-                      className="inline-flex items-center rounded-[var(--radius-sm)] px-1.5 py-0.5 text-xs font-medium"
-                      style={{ backgroundColor: `${detailPost.category.color}18`, color: detailPost.category.color }}
-                    >
-                      {detailPost.category.name}
-                    </span>
-                  )}
-                  <span className="text-xs text-[var(--text-muted)]">by {detailPost.author.name ?? detailPost.author.email}</span>
-                </DialogDescription>
-              </DialogHeader>
-
-              <div className="flex-1 overflow-y-auto space-y-4 pr-1">
-                {detailPost.description && (
-                  <p className="text-sm text-[var(--text-secondary)] leading-relaxed whitespace-pre-wrap">
-                    {detailPost.description}
-                  </p>
+        <DialogContent className="max-w-xl flex flex-col gap-0 p-0 max-h-[85vh]">
+          <DialogHeader className="px-5 pt-5 pb-4 border-b border-[var(--border)] shrink-0">
+            <DialogTitle className="text-sm font-semibold text-[var(--text-primary)] leading-snug">
+              {detailPost?.title ?? "Post details"}
+            </DialogTitle>
+            <DialogDescription asChild>
+              <div className="flex flex-wrap items-center gap-2 mt-1.5">
+                {detailPost && <StatusBadge status={detailPost.status} />}
+                {detailPost?.category && (
+                  <span
+                    className="inline-flex items-center rounded-[var(--radius-sm)] px-1.5 py-0.5 text-xs font-medium"
+                    style={{ backgroundColor: `${detailPost.category.color}18`, color: detailPost.category.color }}
+                  >
+                    {detailPost.category.name}
+                  </span>
                 )}
+                {detailPost && (
+                  <span className="text-xs text-[var(--text-muted)]">
+                    by {detailPost.author.name ?? detailPost.author.email}
+                  </span>
+                )}
+              </div>
+            </DialogDescription>
+          </DialogHeader>
 
-                {/* Admin controls */}
-                <div className="flex flex-wrap gap-3">
-                  <div className="flex flex-col gap-1">
-                    <span className="text-xs font-medium text-[var(--text-muted)]">Status</span>
-                    <Select
-                      value={detailPost.status}
-                      onValueChange={(v) => {
-                        handleStatusChange(detailPost.id, v as StatusValue);
-                        setDetailPost((p) => p ? { ...p, status: v } : p);
-                      }}
-                    >
-                      <SelectTrigger className="h-7 w-36 text-xs">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {STATUSES.map((s) => (
-                          <SelectItem key={s} value={s} className="text-xs">
-                            {s === "in-progress" ? "In Progress" : s.charAt(0).toUpperCase() + s.slice(1)}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+          {detailPost && (
+          <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
+            {detailPost.description && (
+              <p className="text-sm text-[var(--text-secondary)] leading-relaxed whitespace-pre-wrap">
+                {detailPost.description}
+              </p>
+            )}
 
-                  {categories.length > 0 && (
-                    <div className="flex flex-col gap-1">
-                      <span className="text-xs font-medium text-[var(--text-muted)]">Category</span>
-                      <Select
-                        value={detailPost.category?.id ?? "none"}
-                        onValueChange={async (v) => {
-                          const catId = v === "none" ? null : v;
-                          const cat = categories.find((c) => c.id === catId) ?? null;
-                          setDetailPost((p) => p ? { ...p, category: cat } : p);
-                          setPosts((ps) => ps.map((p) => p.id === detailPost.id ? { ...p, category: cat } : p));
-                          await fetch(`/api/v1/orgs/${orgSlug}/posts/${detailPost.id}`, {
-                            method: "PATCH",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ categoryId: catId }),
-                          });
-                        }}
-                      >
-                        <SelectTrigger className="h-7 w-40 text-xs">
-                          <SelectValue placeholder="No category" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none" className="text-xs">No category</SelectItem>
-                          {categories.map((c) => (
-                            <SelectItem key={c.id} value={c.id} className="text-xs">{c.name}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
+            {/* Admin controls */}
+            <div className="flex flex-wrap items-end gap-3 pb-4 border-b border-[var(--border)]">
+              <div className="flex flex-col gap-1">
+                <span className="text-xs font-medium text-[var(--text-muted)]">Status</span>
+                <Select
+                  value={detailPost.status}
+                  onValueChange={(v) => {
+                    handleStatusChange(detailPost.id, v as StatusValue);
+                    setDetailPost((p) => p ? { ...p, status: v } : p);
+                  }}
+                >
+                  <SelectTrigger className="h-7 w-36 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {STATUSES.map((s) => (
+                      <SelectItem key={s} value={s} className="text-xs">
+                        {s === "in-progress" ? "In Progress" : s.charAt(0).toUpperCase() + s.slice(1)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {categories.length > 0 && (
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs font-medium text-[var(--text-muted)]">Category</span>
+                  <Select
+                    value={detailPost.category?.id ?? "none"}
+                    onValueChange={async (v) => {
+                      const catId = v === "none" ? null : v;
+                      const cat = categories.find((c) => c.id === catId) ?? null;
+                      setDetailPost((p) => p ? { ...p, category: cat } : p);
+                      setPosts((ps) => ps.map((p) => p.id === detailPost.id ? { ...p, category: cat } : p));
+                      await fetch(`/api/v1/orgs/${orgSlug}/posts/${detailPost.id}`, {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ categoryId: catId }),
+                      });
+                    }}
+                  >
+                    <SelectTrigger className="h-7 w-40 text-xs">
+                      <SelectValue placeholder="No category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none" className="text-xs">No category</SelectItem>
+                      {categories.map((c) => (
+                        <SelectItem key={c.id} value={c.id} className="text-xs">{c.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
+              )}
+            </div>
 
                 {/* Comments */}
                 <div>
@@ -679,8 +686,7 @@ export function AdminFeedbackClient({ orgSlug, initialPosts, initialCategories }
                     </div>
                   </form>
                 </div>
-              </div>
-            </>
+          </div>
           )}
         </DialogContent>
       </Dialog>
