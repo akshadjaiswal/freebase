@@ -69,7 +69,12 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
   if (!body) return errors.badRequest("Invalid JSON body.");
 
   const parsed = updateSchema.safeParse(body);
-  if (!parsed.success) return errors.badRequest(parsed.error.issues[0].message);
+  if (!parsed.success) {
+    return errors.badRequest("Validation failed.", parsed.error.errors.map((e) => ({
+      field: e.path.join("."),
+      message: e.message,
+    })));
+  }
 
   const { status, publishedAt, body: richBody, ...rest } = parsed.data;
 

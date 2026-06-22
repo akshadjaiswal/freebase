@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { errors, ok } from "@/lib/api";
+import { errors, ok, encodeCursor, decodeCursor } from "@/lib/api";
 import { verifyAdminAccess } from "@/lib/auth";
 import { dispatchWebhook } from "@/lib/webhooks";
 
@@ -10,6 +10,10 @@ export async function GET(
   { params }: { params: Promise<{ org: string; id: string }> }
 ) {
   const { org: orgSlug, id: postId } = await params;
+
+  const { searchParams } = new URL(request.url);
+  const limit = Math.min(parseInt(searchParams.get("limit") ?? "50", 10), 100);
+  const cursor = searchParams.get("cursor") ?? undefined;
 
   const org = await prisma.organization.findUnique({
     where: { slug: orgSlug },
@@ -23,21 +27,39 @@ export async function GET(
   });
   if (!post) return errors.notFound("Post not found.");
 
-  const isAdmin = await verifyAdminAccess(orgSlug).catch(() => null);
+  const [isAdmin, total] = await Promise.all([
+    verifyAdminAccess(orgSlug).catch(() => null),
+    prisma.feedbackComment.count({ where: { postId } }),
+  ]);
+
+  const where: { postId: string; createdAt?: { gt: Date } } = { postId };
+  if (cursor) {
+    const decoded = decodeCursor(cursor);
+    if (decoded) {
+      where.createdAt = { gt: new Date(decoded.createdAt) };
+    }
+  }
 
   const comments = await prisma.feedbackComment.findMany({
-    where: { postId },
+    where,
     orderBy: { createdAt: "asc" },
+    take: limit + 1,
   });
 
+  const hasMore = comments.length > limit;
+  const page = hasMore ? comments.slice(0, limit) : comments;
+  const nextCursor = hasMore
+    ? encodeCursor(page[page.length - 1].id, page[page.length - 1].createdAt)
+    : null;
+
   return ok({
-    data: comments.map((c: (typeof comments)[0]) => ({
+    data: page.map((c) => ({
       id: c.id,
       body: c.body,
       author: isAdmin ? { email: c.authorEmail, name: c.authorName } : { name: c.authorName ?? null },
       createdAt: c.createdAt,
     })),
-    pagination: { hasMore: false, total: comments.length },
+    pagination: { hasMore, nextCursor, total },
   });
 }
 

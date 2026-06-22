@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import "@/lib/env"; // validate env vars at startup
 
 // Singleton to avoid connection pool exhaustion in development with HMR
 const globalForPrisma = globalThis as unknown as {

@@ -42,8 +42,10 @@ export async function PATCH(
   const body = await req.json().catch(() => null);
   const parsed = updateSchema.safeParse(body);
   if (!parsed.success) {
-    const field = parsed.error.errors[0];
-    return errors.badRequest(field?.message ?? "Invalid input.");
+    return errors.badRequest("Validation failed.", parsed.error.errors.map((e) => ({
+      field: e.path.join("."),
+      message: e.message,
+    })));
   }
 
   const updateData: { name?: string; accentColor?: string; secretKey?: string } = {};

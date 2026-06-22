@@ -51,7 +51,10 @@ export async function PATCH(
 
   const parsed = patchSchema.safeParse(body);
   if (!parsed.success) {
-    return errors.badRequest(parsed.error.errors[0]?.message ?? "Invalid input");
+    return errors.badRequest("Validation failed.", parsed.error.errors.map((e) => ({
+      field: e.path.join("."),
+      message: e.message,
+    })));
   }
 
   const updates = parsed.data;
