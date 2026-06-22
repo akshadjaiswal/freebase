@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState, useTransition } from "react";
+import { Suspense, useState, useTransition, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
@@ -19,6 +19,20 @@ function LoginForm() {
 
   const orgSlug = searchParams.get("org");
   const next = searchParams.get("next") ?? (orgSlug ? `/${orgSlug}/admin` : "/");
+  const [checking, setChecking] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.orgSlug) {
+          router.replace(`/${data.orgSlug}/admin`);
+        } else {
+          setChecking(false);
+        }
+      })
+      .catch(() => setChecking(false));
+  }, [router]);
 
   function handleLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -50,6 +64,14 @@ function LoginForm() {
       router.push(next);
       router.refresh();
     });
+  }
+
+  if (checking) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[var(--background)]">
+        <div className="h-4 w-4 animate-spin rounded-full border-2 border-[var(--accent)] border-t-transparent" />
+      </div>
+    );
   }
 
   return (

@@ -12,6 +12,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
 
@@ -106,6 +107,10 @@ export function SettingsClient({ org: initialOrg, apiKeys: initialKeys, webhooks
   const [creatingKey, setCreatingKey] = useState(false);
   const [createdKey, setCreatedKey] = useState<string | null>(null);
 
+  // Confirm dialog
+  type ConfirmAction = { type: "regen-secret" } | { type: "delete-key"; id: string } | { type: "delete-webhook"; id: string };
+  const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null);
+
   // Webhook creation
   const [showCreateWebhook, setShowCreateWebhook] = useState(false);
   const [whUrl, setWhUrl] = useState("");
@@ -146,7 +151,6 @@ export function SettingsClient({ org: initialOrg, apiKeys: initialKeys, webhooks
   }
 
   async function regenerateSecret() {
-    if (!confirm("Regenerate the widget secret key? All existing widget JWTs will be invalidated immediately.")) return;
     setRegenerating(true);
     const res = await fetch(`/api/v1/orgs/${org.slug}/settings`, {
       method: "PATCH",
@@ -178,7 +182,6 @@ export function SettingsClient({ org: initialOrg, apiKeys: initialKeys, webhooks
   }
 
   async function deleteApiKey(id: string) {
-    if (!confirm("Delete this API key? Any integrations using it will stop working immediately.")) return;
     const res = await fetch(`/api/v1/orgs/${org.slug}/api-keys/${id}`, { method: "DELETE" });
     if (res.ok) setApiKeys((prev) => prev.filter((k) => k.id !== id));
   }
@@ -210,9 +213,20 @@ export function SettingsClient({ org: initialOrg, apiKeys: initialKeys, webhooks
   }
 
   async function deleteWebhook(id: string) {
-    if (!confirm("Delete this webhook?")) return;
     const res = await fetch(`/api/v1/orgs/${org.slug}/webhooks/${id}`, { method: "DELETE" });
     if (res.ok) setWebhooks((prev) => prev.filter((w) => w.id !== id));
+  }
+
+  async function handleConfirmAction() {
+    if (!confirmAction) return;
+    setConfirmAction(null);
+    if (confirmAction.type === "regen-secret") {
+      await regenerateSecret();
+    } else if (confirmAction.type === "delete-key") {
+      await deleteApiKey(confirmAction.id);
+    } else if (confirmAction.type === "delete-webhook") {
+      await deleteWebhook(confirmAction.id);
+    }
   }
 
   async function toggleWebhook(id: string, active: boolean) {
@@ -289,7 +303,7 @@ export function SettingsClient({ org: initialOrg, apiKeys: initialKeys, webhooks
             </button>
             {showSecret && <CopyButton text={org.secretKey} />}
           </div>
-          <Button variant="outline" size="sm" onClick={regenerateSecret} disabled={regenerating}>
+          <Button variant="outline" size="sm" onClick={() => setConfirmAction({ type: "regen-secret" })} disabled={regenerating}>
             {regenerating ? "Regenerating…" : "Regenerate secret"}
           </Button>
         </div>
@@ -325,7 +339,7 @@ export function SettingsClient({ org: initialOrg, apiKeys: initialKeys, webhooks
                       : "Never used"}
                   </span>
                   <button
-                    onClick={() => deleteApiKey(key.id)}
+                    onClick={() => setConfirmAction({ type: "delete-key", id: key.id })}
                     className="rounded p-1 text-[var(--text-muted)] hover:text-red-400 transition-colors"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
@@ -379,7 +393,7 @@ export function SettingsClient({ org: initialOrg, apiKeys: initialKeys, webhooks
                       {wh.active ? "Active" : "Paused"}
                     </button>
                     <button
-                      onClick={() => deleteWebhook(wh.id)}
+                      onClick={() => setConfirmAction({ type: "delete-webhook", id: wh.id })}
                       className="rounded p-1 text-[var(--text-muted)] hover:text-red-400 transition-colors"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
@@ -454,6 +468,30 @@ export function SettingsClient({ org: initialOrg, apiKeys: initialKeys, webhooks
           </div>
         </div>
       </section>
+
+      {/* Confirm action dialog */}
+      <Dialog open={!!confirmAction} onOpenChange={(open) => !open && setConfirmAction(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>
+              {confirmAction?.type === "regen-secret" && "Regenerate secret key"}
+              {confirmAction?.type === "delete-key" && "Delete API key"}
+              {confirmAction?.type === "delete-webhook" && "Delete webhook"}
+            </DialogTitle>
+            <DialogDescription>
+              {confirmAction?.type === "regen-secret" && "All existing widget JWTs will be invalidated immediately. Any identified widget users will need to re-authenticate."}
+              {confirmAction?.type === "delete-key" && "Any integrations using this key will stop working immediately. This cannot be undone."}
+              {confirmAction?.type === "delete-webhook" && "This webhook will stop receiving events. This cannot be undone."}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setConfirmAction(null)}>Cancel</Button>
+            <Button variant="destructive" onClick={handleConfirmAction}>
+              {confirmAction?.type === "regen-secret" ? "Regenerate" : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Create API Key dialog */}
       <Dialog open={showCreateKey} onOpenChange={(open) => { if (!open) { setShowCreateKey(false); setCreatedKey(null); } }}>

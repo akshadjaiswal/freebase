@@ -46,11 +46,12 @@ export async function POST(request: NextRequest) {
     return errors.conflict(`The slug "${slug}" is already taken. Please choose another.`);
   }
 
-  // Create Supabase Auth user
+  // Create Supabase Auth user (store orgSlug in metadata for middleware redirect)
   const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
     email,
     password,
     email_confirm: true, // auto-confirm in v1 (no email verification step)
+    user_metadata: { orgSlug: slug },
   });
 
   if (authError || !authData.user) {

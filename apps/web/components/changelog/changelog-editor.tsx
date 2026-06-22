@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { TiptapEditor } from "./tiptap-editor";
 import { ChevronLeft, Save, Globe, Trash2 } from "lucide-react";
 import Link from "next/link";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 type Label = "feature" | "improvement" | "bug-fix" | "announcement";
 type Status = "draft" | "published";
@@ -49,7 +51,9 @@ export function ChangelogEditor({ orgSlug, initialData }: ChangelogEditorProps) 
   const [status, setStatus] = useState<Status>(initialData?.status ?? "draft");
   const [body, setBody] = useState<Record<string, unknown>>(initialData?.body ?? {});
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   const handleTitleChange = (val: string) => {
     setTitle(val);
@@ -67,11 +71,13 @@ export function ChangelogEditor({ orgSlug, initialData }: ChangelogEditorProps) 
 
   const handleDelete = async () => {
     if (!initialData) return;
-    if (!window.confirm("Delete this changelog entry? This cannot be undone.")) return;
+    setDeleting(true);
     const res = await fetch(`/api/v1/orgs/${orgSlug}/changelog/${initialData.slug}`, { method: "DELETE" });
     if (res.ok || res.status === 204) {
       router.push(`/${orgSlug}/admin/changelog`);
+      router.refresh();
     } else {
+      setDeleting(false);
       setError("Failed to delete entry.");
     }
   };
@@ -130,7 +136,7 @@ export function ChangelogEditor({ orgSlug, initialData }: ChangelogEditorProps) 
           {error && <p className="text-xs text-red-400">{error}</p>}
           {!isNew && (
             <button
-              onClick={handleDelete}
+              onClick={() => setDeleteOpen(true)}
               disabled={saving}
               className="inline-flex items-center gap-1.5 rounded-[var(--radius)] border border-red-500/30 px-3 py-1.5 text-xs font-medium text-red-400 hover:bg-red-500/10 transition-colors disabled:opacity-50"
             >
@@ -212,6 +218,23 @@ export function ChangelogEditor({ orgSlug, initialData }: ChangelogEditorProps) 
         {/* Editor */}
         <TiptapEditor content={body} onChange={handleEditorChange} />
       </div>
+
+      <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Delete entry</DialogTitle>
+            <DialogDescription>
+              This will permanently delete this changelog entry. This cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setDeleteOpen(false)} disabled={deleting}>Cancel</Button>
+            <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
+              {deleting ? "Deleting…" : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

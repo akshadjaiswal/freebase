@@ -4,7 +4,10 @@ import localFont from "next/font/local";
 import { ThemeProvider } from "next-themes";
 import { Toaster } from "sonner";
 import NextTopLoader from "nextjs-toploader";
+import { WidgetDemo } from "@/components/widget-demo";
 import "./globals.css";
+
+const DEMO_ORG = process.env.NEXT_PUBLIC_WIDGET_DEMO_ORG ?? "";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -57,6 +60,7 @@ export default function RootLayout({
             showSpinner={false}
           />
           {children}
+          {DEMO_ORG && <WidgetDemo orgSlug={DEMO_ORG} />}
           <Toaster
             position="bottom-right"
             toastOptions={{

@@ -142,8 +142,8 @@ This file is the primary context for building Freebase. Read it at the start of 
 - `apps/web/app/api/widget/[org]/config/route.ts` — GET org name/accentColor/categories (public, no auth)
 - `apps/web/app/api/widget/[org]/identify/route.ts` — POST verify JWT, rate limited 60/min
 - `apps/web/public/cdn/v1/sdk.js` — built bundle (6.2 kB gzip, <20KB limit)
-- `apps/web/components/widget-demo.tsx` — `"use client"` component that loads `/cdn/v1/sdk.js` and calls `window.Freebase('init', {...})` on mount; used by the marketing page for live dogfood demo
-- **Env var:** `NEXT_PUBLIC_WIDGET_DEMO_ORG` — set to an org slug → marketing homepage shows live widget; unset → no widget (safe default)
+- `apps/web/components/widget-demo.tsx` — `"use client"` component that loads `/cdn/v1/sdk.js` and calls `window.Freebase('init', {...})` on mount; mounted in **root layout** (`apps/web/app/layout.tsx`) — NOT the marketing page — so it persists across all routes including admin
+- **Env var:** `NEXT_PUBLIC_WIDGET_DEMO_ORG` — set to an org slug → widget loads on all pages; unset → no widget (safe default)
 
 **Phase 5 build commands:**
 ```bash
@@ -249,6 +249,15 @@ pnpm db:push
   - SHA-256 hashes incoming key → looks up in `api_keys` table → checks org match
 - Widget JWT: `verifyWidgetJwt(token, secretKey)` in `lib/jwt.ts`
   - HMAC-SHA256 signed by host app using org's `secretKey`
+
+### Login redirect — two-layer approach
+
+Logged-in users visiting `/login`, `/`, or `/new` are redirected to `/{org}/admin` via two mechanisms:
+
+1. **Middleware (fast path)** — checks `user?.user_metadata?.orgSlug`. Works for users created after `create-org` started writing this metadata. Fires at the Edge before the page renders.
+2. **Client-side `useEffect` (reliable fallback)** — login page calls `/api/auth/me` on mount; if response includes `orgSlug`, calls `router.replace`. Works for ALL users regardless of when they registered. Shows a spinner while the check is in flight.
+
+`create-org` route now writes `user_metadata: { orgSlug }` when creating Supabase users so new users also get the fast middleware path.
 
 ---
 
@@ -368,7 +377,9 @@ All decisions are locked in `/research/`:
 - [x] All 6 phases complete — v1 ready
 - [x] Security: 8 vulns fixed (draft changelog exposure, vote dedup bypass, SSRF, email leakage, webhook secret hashing, HTML injection, token expiry, orgSlug naming)
 - [x] Performance: React.cache() on verifyAdminAccess, unstable_cache on all admin + public page data, Router Cache TTL 5min, revalidateTag on all mutations
-- [x] UX: top navigation progress bar (nextjs-toploader), login redirect to org admin, widget button stacking fixed
+- [x] UX: top navigation progress bar (nextjs-toploader), login redirect to org admin (two-layer: middleware + client useEffect), widget button stacking fixed, widget moved to root layout so it persists on admin page refresh
+- [x] UX: all native confirm()/window.confirm() replaced with Radix Dialog — settings (regen secret, delete API key, delete webhook), changelog editor (delete entry), roadmap admin (delete item)
+- [x] UX: changelog delete shows loading state on button and refreshes list via router.refresh() after deletion
 
 ## Prisma Client Note (pnpm monorepo)
 

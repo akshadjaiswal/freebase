@@ -1,9 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, MessageSquare, BookOpen, Map, Code2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { WidgetDemo } from "@/components/widget-demo";
 
-const DEMO_ORG = process.env.NEXT_PUBLIC_WIDGET_DEMO_ORG ?? "";
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://freebase.app";
 
 export default function HomePage() {
@@ -155,8 +153,6 @@ export default function HomePage() {
         </div>
       </footer>
 
-      {/* Live widget demo — only mounts when NEXT_PUBLIC_WIDGET_DEMO_ORG is set */}
-      {DEMO_ORG && <WidgetDemo orgSlug={DEMO_ORG} />}
     </div>
   );
 }

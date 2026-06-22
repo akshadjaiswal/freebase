@@ -59,9 +59,23 @@ export async function middleware(request: NextRequest) {
     return supabaseResponse;
   }
 
-  // ─── Auth route session refresh ───────────────────────────────────────────
-  if (pathname.startsWith("/login") || pathname.startsWith("/new")) {
-    const { supabaseResponse } = await updateSession(request);
+  // ─── Redirect logged-in users away from marketing + create-org pages ────────
+  if (pathname === "/" || pathname.startsWith("/new")) {
+    const { supabaseResponse, user } = await updateSession(request);
+    const orgSlug = user?.user_metadata?.orgSlug as string | undefined;
+    if (orgSlug) {
+      return NextResponse.redirect(new URL(`/${orgSlug}/admin`, request.url));
+    }
+    return supabaseResponse;
+  }
+
+  // ─── Auth route session refresh + logged-in redirect ────────────────────
+  if (pathname.startsWith("/login")) {
+    const { supabaseResponse, user } = await updateSession(request);
+    const orgSlug = user?.user_metadata?.orgSlug as string | undefined;
+    if (orgSlug) {
+      return NextResponse.redirect(new URL(`/${orgSlug}/admin`, request.url));
+    }
     return supabaseResponse;
   }
 

@@ -21,6 +21,8 @@ import { CSS } from "@dnd-kit/utilities";
 import { Plus, GripVertical } from "lucide-react";
 import { RoadmapCard, type RoadmapItem } from "./roadmap-card";
 import { AddRoadmapItemModal } from "./add-roadmap-item-modal";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 type Status = "planned" | "in-progress" | "done";
 
@@ -161,6 +163,7 @@ export function AdminRoadmapClient({ orgSlug, initialData, feedbackPosts }: Prop
   const [data, setData] = useState<RoadmapData>(initialData);
   const [activeItem, setActiveItem] = useState<RoadmapItem | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   // Captures final status+position computed inside setData updater for the PATCH call
   const dragPersistRef = useRef<{ id: string; status: Status; position: number } | null>(null);
 
@@ -305,7 +308,16 @@ export function AdminRoadmapClient({ orgSlug, initialData, feedbackPosts }: Prop
 
   const handleDelete = useCallback(
     async (id: string) => {
-      if (!confirm("Delete this roadmap item?")) return;
+      setDeletingId(id);
+    },
+    []
+  );
+
+  const confirmDelete = useCallback(
+    async () => {
+      if (!deletingId) return;
+      const id = deletingId;
+      setDeletingId(null);
       setData((prev) => {
         const newData = { ...prev };
         for (const colKey of Object.keys(newData) as (keyof RoadmapData)[]) {
@@ -315,7 +327,7 @@ export function AdminRoadmapClient({ orgSlug, initialData, feedbackPosts }: Prop
       });
       await fetch(`/api/v1/orgs/${orgSlug}/roadmap/${id}`, { method: "DELETE" });
     },
-    [orgSlug]
+    [deletingId, orgSlug]
   );
 
   const handleAdd = useCallback(
@@ -383,6 +395,21 @@ export function AdminRoadmapClient({ orgSlug, initialData, feedbackPosts }: Prop
           onClose={() => setShowAddModal(false)}
         />
       )}
+
+      <Dialog open={!!deletingId} onOpenChange={(open) => !open && setDeletingId(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Delete item</DialogTitle>
+            <DialogDescription>
+              This will permanently delete this roadmap item. This cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setDeletingId(null)}>Cancel</Button>
+            <Button variant="destructive" onClick={confirmDelete}>Delete</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
