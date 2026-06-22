@@ -545,8 +545,7 @@ export function AdminFeedbackClient({ orgSlug, initialPosts, initialCategories }
             </DialogDescription>
           </DialogHeader>
 
-          {detailPost && (
-          <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
+          {detailPost && <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
             {detailPost.description && (
               <p className="text-sm text-[var(--text-secondary)] leading-relaxed whitespace-pre-wrap">
                 {detailPost.description}
@@ -686,8 +685,7 @@ export function AdminFeedbackClient({ orgSlug, initialPosts, initialCategories }
                     </div>
                   </form>
                 </div>
-          </div>
-          )}
+          </div>}
         </DialogContent>
       </Dialog>
 
@@ -714,6 +712,7 @@ export function AdminFeedbackClient({ orgSlug, initialPosts, initialCategories }
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle>Manage categories</DialogTitle>
+            <DialogDescription>Create or delete categories for feedback posts.</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">

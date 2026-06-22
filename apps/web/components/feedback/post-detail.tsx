@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { formatDistanceToNow } from "date-fns";
-import { MessageSquare, X } from "lucide-react";
+import { MessageSquare } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -34,10 +34,10 @@ interface Post {
 interface PostDetailProps {
   post: Post;
   orgSlug: string;
-  onClose: () => void;
+  onClose?: () => void;
 }
 
-export function PostDetail({ post, orgSlug, onClose }: PostDetailProps) {
+export function PostDetail({ post, orgSlug }: PostDetailProps) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [loadingComments, setLoadingComments] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -125,13 +125,6 @@ export function PostDetail({ post, orgSlug, onClose }: PostDetailProps) {
             </div>
           </div>
         </div>
-        <button
-          onClick={onClose}
-          className="mt-0.5 rounded-[var(--radius)] p-1.5 text-[var(--text-muted)] transition-colors hover:bg-[var(--surface-raised)] hover:text-[var(--text-primary)]"
-          aria-label="Close"
-        >
-          <X className="h-4 w-4" />
-        </button>
       </div>
 
       {/* Body */}

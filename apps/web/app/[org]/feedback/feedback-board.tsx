@@ -14,6 +14,7 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -263,6 +264,7 @@ export function FeedbackBoard({
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>Submit feedback</DialogTitle>
+            <DialogDescription>Share your idea or report an issue.</DialogDescription>
           </DialogHeader>
           <PostForm
             orgSlug={orgSlug}
@@ -276,6 +278,8 @@ export function FeedbackBoard({
       {/* Post detail dialog */}
       <Dialog open={!!selectedPost} onOpenChange={(open) => !open && setSelectedPost(null)}>
         <DialogContent className="max-h-[80vh] max-w-xl overflow-hidden p-0">
+          <DialogTitle className="sr-only">{selectedPost?.title ?? "Feedback post"}</DialogTitle>
+          <DialogDescription className="sr-only">Feedback post details and comments</DialogDescription>
           {selectedPost && (
             <PostDetail
               post={selectedPost}

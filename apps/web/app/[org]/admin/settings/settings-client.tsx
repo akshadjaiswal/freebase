@@ -498,6 +498,7 @@ export function SettingsClient({ org: initialOrg, apiKeys: initialKeys, webhooks
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Create API key</DialogTitle>
+            <DialogDescription>Give the key a name to identify it later.</DialogDescription>
           </DialogHeader>
           {createdKey ? (
             <div className="space-y-3">
@@ -540,6 +541,7 @@ export function SettingsClient({ org: initialOrg, apiKeys: initialKeys, webhooks
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Add webhook</DialogTitle>
+            <DialogDescription>Receive signed HTTP POST events from Freebase.</DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             <div>
