@@ -12,6 +12,7 @@ import {
   Plus,
   X,
   Tag,
+  Eye,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -39,6 +40,7 @@ import {
   DialogFooter,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { StatusBadge } from "@/components/feedback/status-badge";
@@ -90,6 +92,68 @@ export function AdminFeedbackClient({ orgSlug, initialPosts, initialCategories }
   const [newCatColor, setNewCatColor] = useState("#6366f1");
   const [catLoading, setCatLoading] = useState(false);
   const [deletingCatId, setDeletingCatId] = useState<string | null>(null);
+
+  // Detail dialog
+  const [detailPost, setDetailPost] = useState<Post | null>(null);
+  const [detailComments, setDetailComments] = useState<{ id: string; body: string; author: { email: string; name?: string | null }; createdAt: string }[]>([]);
+  const [detailCommentsLoading, setDetailCommentsLoading] = useState(false);
+  const [detailCommentBody, setDetailCommentBody] = useState("");
+  const [detailCommentEmail, setDetailCommentEmail] = useState("");
+  const [detailCommentSubmitting, setDetailCommentSubmitting] = useState(false);
+  const [deletingCommentId, setDeletingCommentId] = useState<string | null>(null);
+
+  async function openDetail(post: Post) {
+    setDetailPost(post);
+    setDetailComments([]);
+    setDetailCommentsLoading(true);
+    try {
+      const res = await fetch(`/api/v1/orgs/${orgSlug}/posts/${post.id}/comments`);
+      if (res.ok) {
+        const data = await res.json();
+        setDetailComments(data.data);
+      }
+    } catch {
+      // silently fail
+    } finally {
+      setDetailCommentsLoading(false);
+    }
+  }
+
+  async function handleDetailCommentSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!detailPost || !detailCommentBody.trim() || !detailCommentEmail.trim()) return;
+    setDetailCommentSubmitting(true);
+    try {
+      const res = await fetch(`/api/v1/orgs/${orgSlug}/posts/${detailPost.id}/comments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ body: detailCommentBody, authorEmail: detailCommentEmail }),
+      });
+      if (!res.ok) { toast.error("Failed to post comment."); return; }
+      const newComment = await res.json();
+      setDetailComments((prev) => [...prev, newComment]);
+      setPosts((ps) => ps.map((p) => p.id === detailPost.id ? { ...p, commentCount: p.commentCount + 1 } : p));
+      setDetailCommentBody("");
+      toast.success("Comment posted.");
+    } catch {
+      toast.error("Failed to post comment.");
+    } finally {
+      setDetailCommentSubmitting(false);
+    }
+  }
+
+  async function handleDeleteComment(commentId: string) {
+    if (!detailPost) return;
+    setDeletingCommentId(null);
+    setDetailComments((prev) => prev.filter((c) => c.id !== commentId));
+    setPosts((ps) => ps.map((p) => p.id === detailPost.id ? { ...p, commentCount: Math.max(0, p.commentCount - 1) } : p));
+    try {
+      const res = await fetch(`/api/v1/orgs/${orgSlug}/posts/${detailPost.id}/comments/${commentId}`, { method: "DELETE" });
+      if (!res.ok) toast.error("Failed to delete comment.");
+    } catch {
+      toast.error("Failed to delete comment.");
+    }
+  }
 
   const filteredPosts = activeTab === "all" ? posts : posts.filter((p) => p.status === activeTab);
 
@@ -425,6 +489,11 @@ export function AdminFeedbackClient({ orgSlug, initialPosts, initialCategories }
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => openDetail(post)}>
+                        <Eye className="h-3.5 w-3.5" />
+                        View details
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={() => handlePin(post.id)}>
                         {post.pinned ? (
                           <><PinOff className="h-3.5 w-3.5" /> Unpin</>
@@ -448,6 +517,173 @@ export function AdminFeedbackClient({ orgSlug, initialPosts, initialCategories }
           </div>
         )}
       </div>
+
+      {/* Post detail dialog */}
+      <Dialog open={!!detailPost} onOpenChange={(open) => !open && setDetailPost(null)}>
+        <DialogContent className="max-w-xl max-h-[85vh] flex flex-col">
+          {detailPost && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="text-base leading-snug pr-6">{detailPost.title}</DialogTitle>
+                <DialogDescription className="flex flex-wrap items-center gap-2 mt-1">
+                  <StatusBadge status={detailPost.status} />
+                  {detailPost.category && (
+                    <span
+                      className="inline-flex items-center rounded-[var(--radius-sm)] px-1.5 py-0.5 text-xs font-medium"
+                      style={{ backgroundColor: `${detailPost.category.color}18`, color: detailPost.category.color }}
+                    >
+                      {detailPost.category.name}
+                    </span>
+                  )}
+                  <span className="text-xs text-[var(--text-muted)]">by {detailPost.author.name ?? detailPost.author.email}</span>
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="flex-1 overflow-y-auto space-y-4 pr-1">
+                {detailPost.description && (
+                  <p className="text-sm text-[var(--text-secondary)] leading-relaxed whitespace-pre-wrap">
+                    {detailPost.description}
+                  </p>
+                )}
+
+                {/* Admin controls */}
+                <div className="flex flex-wrap gap-3">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs font-medium text-[var(--text-muted)]">Status</span>
+                    <Select
+                      value={detailPost.status}
+                      onValueChange={(v) => {
+                        handleStatusChange(detailPost.id, v as StatusValue);
+                        setDetailPost((p) => p ? { ...p, status: v } : p);
+                      }}
+                    >
+                      <SelectTrigger className="h-7 w-36 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {STATUSES.map((s) => (
+                          <SelectItem key={s} value={s} className="text-xs">
+                            {s === "in-progress" ? "In Progress" : s.charAt(0).toUpperCase() + s.slice(1)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {categories.length > 0 && (
+                    <div className="flex flex-col gap-1">
+                      <span className="text-xs font-medium text-[var(--text-muted)]">Category</span>
+                      <Select
+                        value={detailPost.category?.id ?? "none"}
+                        onValueChange={async (v) => {
+                          const catId = v === "none" ? null : v;
+                          const cat = categories.find((c) => c.id === catId) ?? null;
+                          setDetailPost((p) => p ? { ...p, category: cat } : p);
+                          setPosts((ps) => ps.map((p) => p.id === detailPost.id ? { ...p, category: cat } : p));
+                          await fetch(`/api/v1/orgs/${orgSlug}/posts/${detailPost.id}`, {
+                            method: "PATCH",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ categoryId: catId }),
+                          });
+                        }}
+                      >
+                        <SelectTrigger className="h-7 w-40 text-xs">
+                          <SelectValue placeholder="No category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none" className="text-xs">No category</SelectItem>
+                          {categories.map((c) => (
+                            <SelectItem key={c.id} value={c.id} className="text-xs">{c.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                </div>
+
+                {/* Comments */}
+                <div>
+                  <h3 className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+                    <MessageSquare className="h-3.5 w-3.5" />
+                    Comments ({detailComments.length})
+                  </h3>
+
+                  {detailCommentsLoading ? (
+                    <div className="space-y-2">
+                      {[1, 2].map((i) => (
+                        <div key={i} className="h-10 animate-pulse rounded-[var(--radius-md)] bg-[var(--surface-raised)]" />
+                      ))}
+                    </div>
+                  ) : detailComments.length === 0 ? (
+                    <p className="text-xs text-[var(--text-muted)]">No comments yet.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {detailComments.map((comment) => (
+                        <div key={comment.id} className="group relative rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] p-3">
+                          <div className="mb-1 flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2">
+                              <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[var(--surface-raised)] text-[9px] font-semibold uppercase text-[var(--text-muted)]">
+                                {(comment.author.name ?? comment.author.email)[0]}
+                              </div>
+                              <span className="text-xs font-medium text-[var(--text-secondary)]">
+                                {comment.author.name ?? comment.author.email}
+                              </span>
+                            </div>
+                            {deletingCommentId === comment.id ? (
+                              <div className="flex items-center gap-1">
+                                <span className="text-xs text-[var(--text-muted)]">Delete?</span>
+                                <button onClick={() => handleDeleteComment(comment.id)} className="text-xs text-[var(--error)] hover:underline">Yes</button>
+                                <button onClick={() => setDeletingCommentId(null)} className="text-xs text-[var(--text-muted)] hover:underline">No</button>
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => setDeletingCommentId(comment.id)}
+                                className="opacity-0 group-hover:opacity-100 text-[var(--text-muted)] hover:text-[var(--error)] transition-opacity"
+                                aria-label="Delete comment"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            )}
+                          </div>
+                          <p className="text-xs text-[var(--text-primary)] leading-relaxed">{comment.body}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Admin reply form */}
+                  <form onSubmit={handleDetailCommentSubmit} className="mt-3 space-y-2">
+                    <Textarea
+                      value={detailCommentBody}
+                      onChange={(e) => setDetailCommentBody(e.target.value)}
+                      placeholder="Reply as admin…"
+                      rows={2}
+                      maxLength={1000}
+                    />
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="email"
+                        value={detailCommentEmail}
+                        onChange={(e) => setDetailCommentEmail(e.target.value)}
+                        placeholder="your@email.com"
+                        className="flex-1 text-xs h-7"
+                      />
+                      <Button
+                        type="submit"
+                        size="sm"
+                        className="h-7 text-xs"
+                        disabled={detailCommentSubmitting || !detailCommentBody.trim() || !detailCommentEmail.trim()}
+                      >
+                        {detailCommentSubmitting ? "Posting…" : "Post"}
+                      </Button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Delete confirmation dialog */}
       <Dialog open={!!deletingId} onOpenChange={(open) => !open && setDeletingId(null)}>
