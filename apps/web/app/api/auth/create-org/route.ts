@@ -4,6 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 import { randomBytes } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { errors, ok } from "@/lib/api";
+import { logger } from "@/lib/logger";
 
 const schema = z.object({
   orgName: z.string().min(1).max(100),
@@ -58,7 +59,7 @@ export async function POST(request: NextRequest) {
     if (authError?.message.includes("already registered")) {
       return errors.conflict("An account with this email already exists.");
     }
-    console.error("Supabase auth error:", authError);
+    logger.error("Supabase auth error during org creation", { error: authError?.message });
     return errors.internal();
   }
 
@@ -83,7 +84,7 @@ export async function POST(request: NextRequest) {
   } catch (err) {
     // Roll back Supabase user if DB write failed
     await supabaseAdmin.auth.admin.deleteUser(authData.user.id).catch(() => {});
-    console.error("DB create-org error:", err);
+    logger.error("DB error during org creation", { error: err instanceof Error ? err.message : String(err) });
     return errors.internal();
   }
 }

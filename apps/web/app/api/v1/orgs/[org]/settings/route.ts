@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { verifyAdminAccess } from "@/lib/auth";
 import { errors, ok } from "@/lib/api";
 import { createClient } from "@/lib/supabase/server";
+import { logger } from "@/lib/logger";
 
 const updateSchema = z.object({
   name: z.string().min(1).max(100).optional(),
@@ -72,20 +73,28 @@ export async function DELETE(
   const session = await verifyAdminAccess(orgSlug);
   if (!session) return errors.unauthorized();
 
-  // Delete org (cascades to all related records via Prisma onDelete: Cascade)
-  await prisma.organization.delete({ where: { id: session.org.id } });
-
-  // Delete Supabase auth user
+  // Delete Supabase auth user FIRST — if this fails, org stays intact and user can retry
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (user) {
     const { createClient: createAdmin } = await import("@supabase/supabase-js");
-    const admin = createAdmin(
+    const adminClient = createAdmin(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
-    await admin.auth.admin.deleteUser(user.id).catch(() => {});
+    const { error: deleteAuthError } = await adminClient.auth.admin.deleteUser(user.id);
+    if (deleteAuthError) {
+      logger.error("Failed to delete Supabase auth user during org deletion", {
+        userId: user.id,
+        orgId: session.org.id,
+        error: deleteAuthError.message,
+      });
+      return errors.internal();
+    }
   }
+
+  // Delete org (cascades to all related records via Prisma onDelete: Cascade)
+  await prisma.organization.delete({ where: { id: session.org.id } });
 
   return new Response(null, { status: 204 });
 }

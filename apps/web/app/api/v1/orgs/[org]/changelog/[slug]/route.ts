@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { verifyAdminAccess } from "@/lib/auth";
 import { errors, ok } from "@/lib/api";
 import { dispatchWebhook } from "@/lib/webhooks";
+import { logger } from "@/lib/logger";
 
 function escapeHtml(s: string): string {
   return s
@@ -31,9 +32,22 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
   return ok(post);
 }
 
+const tiptapNodeSchema: z.ZodType<Record<string, unknown>> = z.lazy(() =>
+  z.object({
+    type: z.string(),
+    attrs: z.record(z.unknown()).optional(),
+    content: z.array(tiptapNodeSchema).optional(),
+    marks: z.array(z.object({ type: z.string(), attrs: z.record(z.unknown()).optional() })).optional(),
+    text: z.string().optional(),
+  })
+);
+
 const updateSchema = z.object({
   title: z.string().min(1).max(200).transform((s) => s.trim()).optional(),
-  body: z.record(z.unknown()).optional(),
+  body: z.object({
+    type: z.literal("doc"),
+    content: z.array(tiptapNodeSchema).optional(),
+  }).optional(),
   label: z.enum(["feature", "improvement", "bug-fix", "announcement"]).optional(),
   status: z.enum(["draft", "published"]).optional(),
   slug: z.string().max(120).optional(),
@@ -102,7 +116,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
           )
         );
       })
-      .catch((e) => console.error("Failed to send subscriber emails:", e));
+      .catch((e) => logger.error("Failed to send subscriber emails", { orgSlug, error: e instanceof Error ? e.message : String(e) }));
   }
 
   revalidateTag(`changelog-${admin.org.id}`);

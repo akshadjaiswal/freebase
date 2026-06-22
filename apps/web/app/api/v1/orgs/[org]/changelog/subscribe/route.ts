@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { errors, ok } from "@/lib/api";
 import { makeChangelogConfirmToken } from "@/lib/jwt";
+import { logger } from "@/lib/logger";
 
 function escapeHtml(s: string): string {
   return s
@@ -62,7 +63,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ org
       html: `<p>Hi,</p><p>Click the link below to confirm your subscription to <strong>${escapeHtml(org.name)}</strong> changelog updates.</p><p><a href="${confirmUrl}">Confirm subscription →</a></p><p style="color:#666;font-size:12px;">If you didn't request this, ignore this email.</p>`,
     });
   } catch (e) {
-    console.error("Failed to send confirmation email:", e);
+    logger.error("Failed to send confirmation email", { orgSlug, email, error: e instanceof Error ? e.message : String(e) });
     return errors.internal();
   }
 
