@@ -70,7 +70,9 @@ This file is the primary context for building Freebase. Read it at the start of 
 - `apps/web/app/globals.css` — all CSS custom properties (design tokens)
 - `apps/web/app/layout.tsx` — root layout, fonts, ThemeProvider
 - `apps/web/middleware.ts` — rate limiting + admin route protection
-- `apps/web/lib/prisma.ts` — singleton PrismaClient
+- `apps/web/lib/prisma.ts` — singleton PrismaClient (imports `lib/env` at startup as validation gate)
+- `apps/web/lib/env.ts` — Zod env validation at module-load time; throws on missing required vars before any route runs
+- `apps/web/lib/logger.ts` — structured logging: JSON in prod, readable in dev; replaces all console.error in API routes
 - `apps/web/lib/supabase/server.ts` — server Supabase client
 - `apps/web/lib/supabase/client.ts` — browser Supabase client
 - `apps/web/lib/supabase/middleware.ts` — session refresh helper
@@ -79,7 +81,8 @@ This file is the primary context for building Freebase. Read it at the start of 
 - `apps/web/lib/api.ts` — RFC 9457 error helpers, cursor pagination
 - `apps/web/lib/jwt.ts` — widget JWT verify, webhook HMAC
 - `apps/web/lib/rate-limit.ts` — Upstash rate limiter instances
-- `apps/web/components/ui/` — owned shadcn/ui components
+- `apps/web/components/ui/` — owned shadcn/ui components (includes `copy-button.tsx`, `section-header.tsx`)
+- `apps/web/components/feedback/category-chip.tsx` — shared category color chip (`${color}18` alpha pattern)
 - `apps/web/components/layout/sidebar.tsx` — admin sidebar
 - `apps/web/components/layout/topbar.tsx` — public pages topbar (Feedback/Changelog/Roadmap nav)
 
@@ -87,7 +90,11 @@ This file is the primary context for building Freebase. Read it at the start of 
 - `apps/web/app/[org]/feedback/page.tsx` — public feedback board page (Server Component)
 - `apps/web/app/[org]/feedback/feedback-board.tsx` — client board with filters, search, post list, modals
 - `apps/web/app/[org]/admin/feedback/page.tsx` — admin page (Server Component, loads posts+categories)
-- `apps/web/app/[org]/admin/feedback/admin-feedback-client.tsx` — admin table with status, pin, bulk, categories
+- `apps/web/app/[org]/admin/feedback/admin-feedback-client.tsx` — thin shell (~150 lines); composes hooks + sub-components
+- `apps/web/app/[org]/admin/feedback/hooks/` — useFeedbackPosts, useMultiSelect, useDeleteConfirmation, useBulkActions, useDetailModal, useCategoryManagement + shared types
+- `apps/web/app/[org]/admin/feedback/components/` — FeedbackTableRow, BulkActionsBar, PostDetailModal, CategoryManagementDialog, DeleteConfirmDialog
+- `apps/web/app/[org]/admin/error.tsx` — Next.js error boundary for admin layout (sidebar stays up)
+- `apps/web/app/[org]/admin/feedback/error.tsx` — error boundary scoped to feedback page
 - `apps/web/components/feedback/post-card.tsx` — public post card with vote + status
 - `apps/web/components/feedback/vote-button.tsx` — optimistic vote toggle
 - `apps/web/components/feedback/status-badge.tsx` — colored status badge
@@ -165,7 +172,9 @@ SDK boots → drains the `.q` queue → replaces the stub.
 
 ### Phase 6 — API Keys, Webhooks, Settings, Docker
 - `apps/web/app/[org]/admin/settings/page.tsx` — Server Component: loads org, API keys, webhooks; passes `emailEnabled` flag; renders SettingsClient
-- `apps/web/app/[org]/admin/settings/settings-client.tsx` — full client: org name + accent color edit, widget secret reveal/regenerate, API keys CRUD (raw key shown once), webhooks CRUD (events multi-select, active toggle), email status indicator, danger zone (delete org with slug confirm)
+- `apps/web/app/[org]/admin/settings/settings-client.tsx` — thin shell (~110 lines); composes hooks + sub-components
+- `apps/web/app/[org]/admin/settings/hooks/` — useOrgSettings, useSecretKey, useApiKeys, useWebhooks, useConfirmDialog + shared types (ConfirmAction tagged union, ALL_EVENTS)
+- `apps/web/app/[org]/admin/settings/components/` — OrganizationSection, SecretKeySection, ApiKeysList, WebhooksList, DangerZoneSection, ConfirmActionDialog, CreateApiKeyDialog, CreateWebhookDialog
 - `apps/web/app/api/v1/orgs/[org]/api-keys/route.ts` — GET list, POST create (returns raw key once in response)
 - `apps/web/app/api/v1/orgs/[org]/api-keys/[id]/route.ts` — DELETE
 - `apps/web/app/api/v1/orgs/[org]/webhooks/route.ts` — GET list, POST create (secret stored as SHA-256 hash)
@@ -374,12 +383,24 @@ All decisions are locked in `/research/`:
 
 - [ ] Rate limiting gracefully skipped if Upstash not configured (returns null limiter)
 - [ ] Delete org Supabase user cleanup uses dynamic import of `@supabase/supabase-js` admin client — works but not tree-shaken; acceptable for a rare operation
-- [x] All 6 phases complete — v1 ready
+- [x] All 6 product phases complete — v1 ready
+- [x] Production hardening (7 phases): data integrity, env validation, API consistency, god component splits, UX polish, a11y, test infrastructure
 - [x] Security: 8 vulns fixed (draft changelog exposure, vote dedup bypass, SSRF, email leakage, webhook secret hashing, HTML injection, token expiry, orgSlug naming)
+- [x] Security: Tiptap external links get `target="_blank" rel="noopener noreferrer"` via Link extension HTMLAttributes
+- [x] Data integrity: settings DELETE reverses order — Supabase auth user deleted FIRST; Prisma delete only runs on success. If auth fails → 500, org untouched
 - [x] Performance: React.cache() on verifyAdminAccess, unstable_cache on all admin + public page data, Router Cache TTL 5min, revalidateTag on all mutations
+- [x] Observability: structured logging via `lib/logger.ts` (JSON in prod, readable in dev) replaces all console.error in API routes
+- [x] Env validation: `lib/env.ts` (Zod) imported in `lib/prisma.ts` — fails at startup with clear message if vars missing
+- [x] API consistency: Zod errors normalized to `{ field, message }[]` array across all routes
+- [x] Pagination: comments endpoint now cursor-paginated (default 50, max 100) matching posts pattern
+- [x] Modularity: admin-feedback-client 788→150 lines (6 hooks + 5 components); settings-client 596→110 lines (5 hooks + 8 components)
 - [x] UX: top navigation progress bar (nextjs-toploader), login redirect to org admin (two-layer: middleware + client useEffect), widget button stacking fixed, widget moved to root layout so it persists on admin page refresh
 - [x] UX: all native confirm()/window.confirm() replaced with Radix Dialog — settings (regen secret, delete API key, delete webhook), changelog editor (delete entry), roadmap admin (delete item)
 - [x] UX: changelog delete shows loading state on button and refreshes list via router.refresh() after deletion
+- [x] UX: roadmap drag-end setTimeout(0) hack removed — persist payload computed synchronously in setData closure
+- [x] UX: comment loading skeleton has min-h-[200px] to prevent CLS
+- [x] Code quality: CategoryChip component extracts `${color}18` hex-alpha pattern from 4 files; noUnusedLocals + noUnusedParameters enabled in tsconfig
+- [x] Tests: vitest@2 + 8 passing tests covering DELETE atomicity, Zod error shape, cursor pagination hasMore/nextCursor, comment POST validation
 
 ## Prisma Client Note (pnpm monorepo)
 
