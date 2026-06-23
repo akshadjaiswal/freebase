@@ -5,7 +5,7 @@ import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
 import CodeBlock from "@tiptap/extension-code-block";
 
-export async function GET(req: NextRequest, { params }: { params: Promise<{ org: string }> }) {
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ org: string }> }) {
   const { org: orgSlug } = await params;
 
   const org = await prisma.organization.findUnique({

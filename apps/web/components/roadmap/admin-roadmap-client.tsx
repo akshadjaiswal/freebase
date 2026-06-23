@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -164,9 +164,6 @@ export function AdminRoadmapClient({ orgSlug, initialData, feedbackPosts }: Prop
   const [activeItem, setActiveItem] = useState<RoadmapItem | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  // Captures final status+position computed inside setData updater for the PATCH call
-  const dragPersistRef = useRef<{ id: string; status: Status; position: number } | null>(null);
-
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
   );
@@ -245,43 +242,31 @@ export function AdminRoadmapClient({ orgSlug, initialData, feedbackPosts }: Prop
       if (!over) return;
 
       const activeId = active.id as string;
+      let persist: { id: string; status: Status; position: number } | null = null;
 
-      // Recalculate positions and capture final status+position inside updater
-      // so we read the already-mutated state from onDragOver, not stale closure data
-      dragPersistRef.current = null;
       setData((prev) => {
         const newData: RoadmapData = { planned: [], inProgress: [], done: [] };
         for (const colKey of Object.keys(prev) as (keyof RoadmapData)[]) {
-          newData[colKey] = prev[colKey].map((item, idx) => ({
-            ...item,
-            position: idx,
-          }));
+          newData[colKey] = prev[colKey].map((item, idx) => ({ ...item, position: idx }));
           const idx = newData[colKey].findIndex((i) => i.id === activeId);
           if (idx !== -1) {
-            dragPersistRef.current = {
-              id: activeId,
-              status: statusFromColumn(colKey),
-              position: idx,
-            };
+            persist = { id: activeId, status: statusFromColumn(colKey), position: idx };
           }
         }
         return newData;
       });
 
-      // Persist after next tick so dragPersistRef is set by the updater above
-      setTimeout(async () => {
-        const persist = dragPersistRef.current;
-        if (!persist) return;
-        try {
-          await fetch(`/api/v1/orgs/${orgSlug}/roadmap/${persist.id}`, {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ status: persist.status, position: persist.position }),
-          });
-        } catch {
-          // silently fail — UI already updated
-        }
-      }, 0);
+      if (!persist) return;
+      const { id, status, position } = persist as { id: string; status: Status; position: number };
+      try {
+        await fetch(`/api/v1/orgs/${orgSlug}/roadmap/${id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status, position }),
+        });
+      } catch {
+        // silently fail — UI already updated
+      }
     },
     [orgSlug]
   );

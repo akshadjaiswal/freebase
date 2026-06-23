@@ -15,9 +15,9 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
 } from "@/components/ui/select";
 import { StatusBadge } from "@/components/feedback/status-badge";
+import { CategoryChip } from "@/components/feedback/category-chip";
 import { cn } from "@/lib/cn";
 import { STATUSES, type Post, type StatusValue } from "../hooks/types";
 
@@ -53,12 +53,7 @@ export function FeedbackTableRow({ post, isSelected, onToggle, onStatusChange, o
           {post.pinned && <Pin className="h-3 w-3 flex-shrink-0 text-[var(--accent)]" />}
           <span className="truncate text-sm font-medium text-[var(--text-primary)]">{post.title}</span>
           {post.category && (
-            <span
-              className="flex-shrink-0 rounded-[var(--radius-sm)] px-1.5 py-0.5 text-xs"
-              style={{ backgroundColor: `${post.category.color}18`, color: post.category.color }}
-            >
-              {post.category.name}
-            </span>
+            <CategoryChip name={post.category.name} color={post.category.color} className="flex-shrink-0" />
           )}
         </div>
         <p className="mt-0.5 text-xs text-[var(--text-muted)]">{post.author.email}</p>

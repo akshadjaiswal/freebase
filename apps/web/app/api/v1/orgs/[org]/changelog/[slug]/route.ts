@@ -18,7 +18,7 @@ function escapeHtml(s: string): string {
 
 type RouteParams = { params: Promise<{ org: string; slug: string }> };
 
-export async function GET(req: NextRequest, { params }: RouteParams) {
+export async function GET(_req: NextRequest, { params }: RouteParams) {
   const { org: orgSlug, slug } = await params;
 
   const org = await prisma.organization.findUnique({ where: { slug: orgSlug } });
@@ -137,7 +137,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
   return ok(updated);
 }
 
-export async function DELETE(req: NextRequest, { params }: RouteParams) {
+export async function DELETE(_req: NextRequest, { params }: RouteParams) {
   const { org: orgSlug, slug } = await params;
 
   const admin = await verifyAdminAccess(orgSlug);

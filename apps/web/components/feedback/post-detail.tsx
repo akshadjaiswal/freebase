@@ -7,9 +7,9 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { StatusBadge } from "./status-badge";
 import { VoteButton } from "./vote-button";
+import { CategoryChip } from "./category-chip";
 
 interface Comment {
   id: string;
@@ -34,7 +34,6 @@ interface Post {
 interface PostDetailProps {
   post: Post;
   orgSlug: string;
-  onClose?: () => void;
 }
 
 export function PostDetail({ post, orgSlug }: PostDetailProps) {
@@ -108,15 +107,7 @@ export function PostDetail({ post, orgSlug }: PostDetailProps) {
             <div className="mt-1.5 flex flex-wrap items-center gap-2">
               <StatusBadge status={post.status} />
               {post.category && (
-                <span
-                  className="inline-flex items-center rounded-[var(--radius-sm)] px-1.5 py-0.5 text-xs font-medium"
-                  style={{
-                    backgroundColor: `${post.category.color}18`,
-                    color: post.category.color,
-                  }}
-                >
-                  {post.category.name}
-                </span>
+                <CategoryChip name={post.category.name} color={post.category.color} />
               )}
               <span className="text-xs text-[var(--text-muted)]">
                 by {post.author.name ?? post.author.email} ·{" "}
@@ -143,7 +134,7 @@ export function PostDetail({ post, orgSlug }: PostDetailProps) {
           </h3>
 
           {loadingComments ? (
-            <div className="space-y-2">
+            <div className="min-h-[200px] space-y-2">
               {[1, 2].map((i) => (
                 <div key={i} className="h-12 animate-pulse rounded-[var(--radius-md)] bg-[var(--surface-raised)]" />
               ))}

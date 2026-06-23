@@ -5,7 +5,7 @@ import { errors } from "@/lib/api";
 import { verifyAdminAccess } from "@/lib/auth";
 
 export async function DELETE(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ org: string; id: string }> }
 ) {
   const { org: orgSlug, id } = await params;

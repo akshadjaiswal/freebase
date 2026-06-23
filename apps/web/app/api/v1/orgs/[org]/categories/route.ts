@@ -6,7 +6,7 @@ import { errors, ok } from "@/lib/api";
 import { verifyAdminAccess } from "@/lib/auth";
 
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ org: string }> }
 ) {
   const { org: orgSlug } = await params;

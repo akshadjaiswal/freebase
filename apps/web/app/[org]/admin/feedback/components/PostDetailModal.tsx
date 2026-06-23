@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { StatusBadge } from "@/components/feedback/status-badge";
+import { CategoryChip } from "@/components/feedback/category-chip";
 import { STATUSES, type Post, type Comment, type Category, type StatusValue } from "../hooks/types";
 
 interface PostDetailModalProps {
@@ -57,12 +58,7 @@ export function PostDetailModal({
             <div className="flex flex-wrap items-center gap-2 mt-1.5">
               {post && <StatusBadge status={post.status} />}
               {post?.category && (
-                <span
-                  className="inline-flex items-center rounded-[var(--radius-sm)] px-1.5 py-0.5 text-xs font-medium"
-                  style={{ backgroundColor: `${post.category.color}18`, color: post.category.color }}
-                >
-                  {post.category.name}
-                </span>
+                <CategoryChip name={post.category.name} color={post.category.color} />
               )}
               {post && (
                 <span className="text-xs text-[var(--text-muted)]">

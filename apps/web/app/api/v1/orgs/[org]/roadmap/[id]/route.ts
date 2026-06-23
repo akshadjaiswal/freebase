@@ -104,7 +104,7 @@ export async function PATCH(
 
 // DELETE /api/v1/orgs/[org]/roadmap/[id] — delete roadmap item (admin only)
 export async function DELETE(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ org: string; id: string }> }
 ) {
   const { org: orgSlug, id } = await params;

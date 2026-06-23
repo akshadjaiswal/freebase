@@ -7,7 +7,7 @@ import { verifyAdminAccess } from "@/lib/auth";
 import { dispatchWebhook } from "@/lib/webhooks";
 
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ org: string; id: string }> }
 ) {
   const { org: orgSlug, id } = await params;
@@ -138,7 +138,7 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ org: string; id: string }> }
 ) {
   const { org: orgSlug, id } = await params;

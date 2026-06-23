@@ -3,6 +3,7 @@
 import { MessageSquare, Pin } from "lucide-react";
 import { StatusBadge } from "./status-badge";
 import { VoteButton } from "./vote-button";
+import { CategoryChip } from "./category-chip";
 import { cn } from "@/lib/cn";
 
 interface Category {
@@ -69,15 +70,7 @@ export function PostCard({ post, orgSlug, onClick }: PostCardProps) {
           <StatusBadge status={post.status} />
 
           {post.category && (
-            <span
-              className="inline-flex items-center rounded-[var(--radius-sm)] px-1.5 py-0.5 text-xs font-medium"
-              style={{
-                backgroundColor: `${post.category.color}18`,
-                color: post.category.color,
-              }}
-            >
-              {post.category.name}
-            </span>
+            <CategoryChip name={post.category.name} color={post.category.color} />
           )}
 
           <span className="ml-auto flex items-center gap-1 text-xs text-[var(--text-muted)]">

@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { Plus, Search, X, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -130,9 +129,8 @@ export function FeedbackBoard({
     fetchPosts(true);
   }, [status, sort, debouncedQuery]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  function handlePostSubmitted(newPost: { id: string; title: string }) {
+  function handlePostSubmitted(_newPost: { id: string; title: string }) {
     setSubmitOpen(false);
-    // Prepend a placeholder and refetch
     fetchPosts(true);
   }
 
@@ -284,7 +282,6 @@ export function FeedbackBoard({
             <PostDetail
               post={selectedPost}
               orgSlug={orgSlug}
-              onClose={() => setSelectedPost(null)}
             />
           )}
         </DialogContent>
