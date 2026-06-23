@@ -29,7 +29,7 @@ export function TiptapEditor({ content, onChange }: TiptapEditorProps) {
         codeBlock: false, // replaced by CodeBlock extension
         heading: { levels: [2, 3] },
       }),
-      Link.configure({ openOnClick: false, HTMLAttributes: { class: "underline text-[var(--accent)]" } }),
+      Link.configure({ openOnClick: false, HTMLAttributes: { class: "underline text-[var(--accent)]", target: "_blank", rel: "noopener noreferrer" } }),
       CodeBlock.configure({ HTMLAttributes: { class: "tiptap-code-block" } }),
     ],
     content: Object.keys(content).length > 0 ? content : undefined,
@@ -60,6 +60,7 @@ export function TiptapEditor({ content, onChange }: TiptapEditorProps) {
       type="button"
       onClick={onClick}
       title={title}
+      aria-label={title}
       className={`flex h-7 w-7 items-center justify-center rounded-[var(--radius)] transition-colors ${
         active
           ? "bg-[var(--accent-subtle)] text-[var(--accent)]"
