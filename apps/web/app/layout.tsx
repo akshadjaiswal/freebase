@@ -26,12 +26,12 @@ const calSans = localFont({
 
 export const metadata: Metadata = {
   title: {
-    default: "Freebase — Open Source Featurebase Alternative",
+    default: "Freebase — The Free Product Feedback Platform",
     template: "%s | Freebase",
   },
   description:
-    "Open source customer feedback, changelog, and roadmap platform. Self-host or deploy to Vercel free tier.",
-  keywords: ["feedback", "changelog", "roadmap", "open source", "featurebase alternative"],
+    "Collect feedback, publish changelogs, and showcase your roadmap — all in one place. Free forever. Open source, MIT licensed.",
+  keywords: ["feedback", "changelog", "roadmap", "open source", "featurebase alternative", "product feedback", "free"],
   icons: {
     icon: [
       { url: "/favicon.svg", type: "image/svg+xml" },
