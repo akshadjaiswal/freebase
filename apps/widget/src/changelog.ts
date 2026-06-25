@@ -39,10 +39,11 @@ export function createChangelogWidget(
   btn.setAttribute("aria-label", "What's new");
   btn.innerHTML = `<span>What's new</span>`;
 
-  // Popup
+  // Floating window
   const popup = document.createElement("div");
-  popup.className = `fb-popup ${posClass} fb-popup-bottom`;
+  popup.className = `fb-window ${posClass}`;
   popup.setAttribute("data-fb-theme", "dark");
+  popup.style.cssText = "height:500px;bottom:88px";
   popup.innerHTML = buildPopupShell(config, appUrl);
 
   document.body.appendChild(popup);
@@ -76,7 +77,7 @@ export function createChangelogWidget(
   }
 
   function renderEntries(items: ChangelogEntry[]) {
-    const body = popup.querySelector(".fb-popup-body");
+    const body = popup.querySelector(".fb-cl-body");
     if (!body) return;
 
     if (items.length === 0) {
@@ -142,14 +143,17 @@ export function createChangelogWidget(
 
 function buildPopupShell(config: OrgConfig, appUrl: string): string {
   return `
-    <div class="fb-popup-header">
-      <p class="fb-popup-title">What's new</p>
+    <div class="fb-window-header">
+      <div class="fb-window-title-row">
+        <span class="fb-window-dot"></span>
+        <p class="fb-window-title">What's new</p>
+      </div>
       <button class="fb-close" aria-label="Close">${CLOSE_ICON}</button>
     </div>
-    <div class="fb-popup-body">
+    <div class="fb-cl-body">
       <div class="fb-loading">Loading...</div>
     </div>
-    <div class="fb-popup-footer">
+    <div class="fb-window-footer">
       <a href="${escAttr(appUrl)}/${escAttr(config.slug)}/changelog" target="_blank" rel="noopener">View all updates →</a>
     </div>
   `;

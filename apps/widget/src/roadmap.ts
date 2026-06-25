@@ -1,7 +1,6 @@
 import { OrgConfig, RoadmapData, fetchRoadmap } from "./api";
 
-const BTN_BOTTOM_BASE = "24px";
-const BTN_BOTTOM_STACKED = "84px"; // stacks above feedback button (24px button + 24px gap + 12px margin = ~84px)
+const BTN_BOTTOM_STACKED = "84px";
 
 const MAP_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>`;
 const CLOSE_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>`;
@@ -22,24 +21,19 @@ export function createRoadmapWidget(
   btn.innerHTML = MAP_ICON;
   btn.style.bottom = BTN_BOTTOM_STACKED;
 
-  // Overlay
-  const overlay = document.createElement("div");
-  overlay.className = "fb-overlay";
-
-  // Panel
+  // Floating window
   const panel = document.createElement("div");
-  panel.className = `fb-panel ${posClass}`;
+  panel.className = `fb-window ${posClass}`;
   panel.setAttribute("data-fb-theme", "dark");
+  panel.style.cssText = "height:580px;bottom:88px";
   panel.innerHTML = buildPanelShell(config);
 
-  document.body.appendChild(overlay);
   document.body.appendChild(panel);
   document.body.appendChild(btn);
 
   function openPanel() {
     isOpen = true;
     panel.classList.add("fb-open");
-    overlay.classList.add("fb-open");
 
     if (!dataLoaded) {
       dataLoaded = true;
@@ -50,11 +44,10 @@ export function createRoadmapWidget(
   function closePanel() {
     isOpen = false;
     panel.classList.remove("fb-open");
-    overlay.classList.remove("fb-open");
   }
 
   async function loadRoadmap() {
-    const body = panel.querySelector(".fb-panel-body");
+    const body = panel.querySelector(".fb-window-body");
     if (!body) return;
 
     const data = await fetchRoadmap(config.slug);
@@ -74,7 +67,6 @@ export function createRoadmapWidget(
     }
   });
 
-  overlay.addEventListener("click", closePanel);
   panel.querySelector(".fb-close")?.addEventListener("click", closePanel);
 
   return {
@@ -86,11 +78,14 @@ export function createRoadmapWidget(
 
 function buildPanelShell(config: OrgConfig): string {
   return `
-    <div class="fb-panel-header">
-      <p class="fb-panel-title">${escHtml(config.name)} — Roadmap</p>
+    <div class="fb-window-header">
+      <div class="fb-window-title-row">
+        <span class="fb-window-dot"></span>
+        <p class="fb-window-title">Roadmap</p>
+      </div>
       <button class="fb-close" aria-label="Close">${CLOSE_ICON}</button>
     </div>
-    <div class="fb-panel-body" style="padding:16px">
+    <div class="fb-window-body">
       <div class="fb-loading">Loading roadmap...</div>
     </div>
   `;

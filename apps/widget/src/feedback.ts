@@ -27,35 +27,29 @@ export function createFeedbackWidget(
   btn.innerHTML = PENCIL_ICON;
   btn.style.bottom = BTN_BOTTOM_BASE;
 
-  // Overlay
-  const overlay = document.createElement("div");
-  overlay.className = "fb-overlay";
-
-  // Panel
+  // Floating window
   const panel = document.createElement("div");
-  panel.className = `fb-panel ${posClass}`;
+  panel.className = `fb-window ${posClass}`;
   panel.setAttribute("data-fb-theme", "dark");
+  panel.style.cssText = "height:560px;bottom:88px";
   panel.innerHTML = buildPanelHtml(config);
 
-  document.body.appendChild(overlay);
   document.body.appendChild(panel);
   document.body.appendChild(btn);
 
   function openPanel() {
     state.open = true;
     panel.classList.add("fb-open");
-    overlay.classList.add("fb-open");
   }
 
   function closePanel() {
     state.open = false;
     panel.classList.remove("fb-open");
-    overlay.classList.remove("fb-open");
   }
 
   function resetForm() {
     state.success = false;
-    const body = panel.querySelector(".fb-panel-body");
+    const body = panel.querySelector(".fb-window-body");
     if (body) body.innerHTML = buildFormHtml(config);
     attachFormHandlers();
   }
@@ -112,7 +106,7 @@ export function createFeedbackWidget(
 
       // Success state
       state.success = true;
-      const body = panel.querySelector(".fb-panel-body");
+      const body = panel.querySelector(".fb-window-body");
       if (body) {
         body.innerHTML = `
           <div class="fb-success">
@@ -139,8 +133,6 @@ export function createFeedbackWidget(
     }
   });
 
-  overlay.addEventListener("click", closePanel);
-
   panel.querySelector(".fb-close")?.addEventListener("click", closePanel);
 
   attachFormHandlers();
@@ -154,11 +146,14 @@ export function createFeedbackWidget(
 
 function buildPanelHtml(config: OrgConfig): string {
   return `
-    <div class="fb-panel-header">
-      <p class="fb-panel-title">${escHtml(config.name)} — Submit Feedback</p>
+    <div class="fb-window-header">
+      <div class="fb-window-title-row">
+        <span class="fb-window-dot"></span>
+        <p class="fb-window-title">Submit Feedback</p>
+      </div>
       <button class="fb-close" aria-label="Close">${CLOSE_ICON}</button>
     </div>
-    <div class="fb-panel-body">
+    <div class="fb-window-body">
       ${buildFormHtml(config)}
     </div>
   `;
