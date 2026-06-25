@@ -3,12 +3,16 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { Logo } from "@/components/ui/logo";
+import { darkenHex } from "@/lib/color";
 import { cn } from "@/lib/cn";
 
 interface TopbarProps {
   orgSlug: string;
   orgName: string;
   logoUrl?: string | null;
+  accentColor?: string;
+  wide?: boolean;
 }
 
 const tabs = [
@@ -17,19 +21,28 @@ const tabs = [
   { label: "Roadmap", href: (org: string) => `/${org}/roadmap` },
 ];
 
-export function Topbar({ orgSlug, orgName, logoUrl }: TopbarProps) {
+export function Topbar({ orgSlug, orgName, logoUrl, accentColor, wide }: TopbarProps) {
   const pathname = usePathname();
 
+  const accentVars = accentColor
+    ? ({
+        "--accent": accentColor,
+        "--accent-hover": darkenHex(accentColor),
+        "--accent-subtle": `${accentColor}1f`,
+      } as React.CSSProperties)
+    : undefined;
+
   return (
-    <header className="sticky top-0 z-40 h-14 border-b border-[var(--border)] bg-[var(--background)]/80 backdrop-blur-sm">
-      <div className="mx-auto flex h-full max-w-3xl items-center justify-between px-4">
-        <div className="flex items-center gap-3">
+    <header
+      className="sticky top-0 z-40 h-14 border-b border-[var(--border)] bg-[var(--background)]/80 backdrop-blur-sm"
+      style={accentVars}
+    >
+      <div className={cn("mx-auto flex h-full items-center justify-between px-4", wide ? "max-w-5xl" : "max-w-3xl")}>
+        <div className="flex items-center gap-2.5">
           {logoUrl ? (
             <img src={logoUrl} alt={orgName} className="h-6 w-6 rounded-[var(--radius-sm)] object-cover" />
           ) : (
-            <div className="flex h-6 w-6 items-center justify-center rounded-[var(--radius-sm)] bg-[var(--accent)] text-[10px] font-bold text-[var(--accent-foreground)]">
-              {orgName[0]?.toUpperCase()}
-            </div>
+            <Logo size={20} />
           )}
           <span className="text-sm font-semibold text-[var(--text-primary)]">{orgName}</span>
         </div>

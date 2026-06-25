@@ -51,7 +51,7 @@ export default async function ChangelogPostPage({ params }: Props) {
 
   return (
     <div className="min-h-screen bg-[var(--background)]">
-      <Topbar orgSlug={orgSlug} orgName={org.name} />
+      <Topbar orgSlug={orgSlug} orgName={org.name} accentColor={org.accentColor} />
       <div className="mx-auto max-w-2xl px-4 py-10">
         <Link
           href={`/${orgSlug}/changelog`}
