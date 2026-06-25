@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { Topbar } from "@/components/layout/topbar";
+import { PageHero } from "@/components/layout/page-hero";
 import { ChangelogEntry } from "@/components/changelog/changelog-entry";
 import { SubscribeButton } from "@/components/changelog/subscribe-button";
 import { getOrgBySlug, getPublicChangelogPageData } from "@/lib/data";
@@ -40,24 +41,28 @@ export default async function ChangelogPage({ params }: Props) {
 
   const emailEnabled = !!process.env.EMAIL_FROM_DOMAIN;
 
+  const actions = (
+    <>
+      <a
+        href={`/${orgSlug}/changelog/rss.xml`}
+        className="text-xs text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors"
+      >
+        RSS
+      </a>
+      {emailEnabled && <SubscribeButton orgSlug={orgSlug} />}
+    </>
+  );
+
   return (
     <div className="min-h-screen bg-[var(--background)]">
-      <Topbar orgSlug={orgSlug} orgName={org.name} />
+      <Topbar orgSlug={orgSlug} orgName={org.name} accentColor={org.accentColor} />
+      <PageHero
+        orgName={org.name}
+        accentColor={org.accentColor}
+        subtitle={`Product updates and new features from ${org.name}.`}
+        actions={actions}
+      />
       <div className="mx-auto max-w-3xl px-4 py-8">
-        {/* Header row */}
-        <div className="mb-8 flex items-center justify-between">
-          <h1 className="text-xl font-semibold text-[var(--text-primary)]">Changelog</h1>
-          <div className="flex items-center gap-3">
-            <a
-              href={`/${orgSlug}/changelog/rss.xml`}
-              className="text-xs text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors"
-            >
-              RSS
-            </a>
-            {emailEnabled && <SubscribeButton orgSlug={orgSlug} />}
-          </div>
-        </div>
-
         {posts.length === 0 ? (
           <div className="rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] p-12 text-center">
             <p className="text-sm text-[var(--text-muted)]">No updates yet. Check back soon!</p>

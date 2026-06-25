@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { Topbar } from "@/components/layout/topbar";
+import { PageHero } from "@/components/layout/page-hero";
 import { FeedbackBoard } from "./feedback-board";
 import { ThemeProvider } from "next-themes";
 import { getOrgBySlug, getPublicFeedbackPageData } from "@/lib/data";
@@ -33,7 +34,12 @@ export default async function FeedbackPage({ params, searchParams }: Props) {
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
       <div className="min-h-screen bg-[var(--background)]">
-        <Topbar orgSlug={orgSlug} orgName={org.name} logoUrl={org.logoUrl} />
+        <Topbar orgSlug={orgSlug} orgName={org.name} logoUrl={org.logoUrl} accentColor={org.accentColor} />
+        <PageHero
+          orgName={org.name}
+          accentColor={org.accentColor}
+          subtitle="Submit ideas, vote on features, and track what we're building."
+        />
         <main className="mx-auto max-w-3xl px-4 py-8">
           <Suspense fallback={<FeedbackBoardSkeleton />}>
             <FeedbackBoard

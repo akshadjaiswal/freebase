@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { Topbar } from "@/components/layout/topbar";
+import { PageHero } from "@/components/layout/page-hero";
 import { KanbanColumn } from "@/components/roadmap/kanban-column";
 import { getOrgBySlug, getPublicRoadmapPageData } from "@/lib/data";
 
@@ -39,16 +40,15 @@ export default async function RoadmapPage({ params }: Props) {
 
   return (
     <div className="min-h-screen bg-[var(--background)]">
-      <Topbar orgSlug={orgSlug} orgName={org.name} logoUrl={org.logoUrl} />
+      <Topbar orgSlug={orgSlug} orgName={org.name} logoUrl={org.logoUrl} accentColor={org.accentColor} wide />
+      <PageHero
+        orgName={org.name}
+        accentColor={org.accentColor}
+        subtitle="What we're working on and what's planned next."
+        wide
+      />
 
       <div className="px-4 py-8">
-        <div className="mb-6 mx-auto max-w-5xl">
-          <h1 className="text-xl font-semibold text-[var(--text-primary)]">Roadmap</h1>
-          <p className="mt-1 text-sm text-[var(--text-secondary)]">
-            What we&apos;re working on and what&apos;s planned next.
-          </p>
-        </div>
-
         {/* Three-column kanban — horizontal scroll + snap on mobile */}
         <div className="mx-auto max-w-5xl overflow-x-auto">
           <div className="flex gap-5 min-w-[860px] snap-x snap-mandatory md:snap-none">
