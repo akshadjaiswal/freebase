@@ -1,11 +1,20 @@
+"use client";
+
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import { motion } from "motion/react";
 import { Button } from "@/components/ui/button";
 
 export function FinalCta() {
   return (
     <section className="border-t border-[var(--border)] px-8 py-24">
-      <div className="mx-auto max-w-xl text-center">
+      <motion.div
+        className="mx-auto max-w-xl text-center"
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-60px" }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
+      >
         <h2
           className="mb-4 text-3xl font-semibold tracking-tight text-[var(--text-primary)] sm:text-4xl"
           style={{ fontFamily: "var(--font-cal)" }}
@@ -21,7 +30,7 @@ export function FinalCta() {
             <ArrowRight className="h-4 w-4" />
           </Button>
         </Link>
-      </div>
+      </motion.div>
     </section>
   );
 }

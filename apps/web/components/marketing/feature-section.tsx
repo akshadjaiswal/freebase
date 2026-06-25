@@ -13,15 +13,15 @@ interface FeatureSectionProps {
 
 export function FeatureSection({ label, headline, bullets, mockup, reverse }: FeatureSectionProps) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 24 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-80px" }}
-      transition={{ duration: 0.4, ease: "easeOut" }}
-      className={`flex flex-col gap-10 lg:flex-row lg:items-center lg:gap-16 ${reverse ? "lg:flex-row-reverse" : ""}`}
-    >
+    <div className={`flex flex-col gap-10 lg:flex-row lg:items-center lg:gap-16 ${reverse ? "lg:flex-row-reverse" : ""}`}>
       {/* Copy */}
-      <div className="flex-1 space-y-5">
+      <motion.div
+        className="flex-1 space-y-5"
+        initial={{ opacity: 0, y: 24 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-80px" }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
+      >
         <span className="inline-block rounded-[var(--radius-sm)] bg-[var(--accent-subtle)] px-2 py-0.5 text-xs font-medium text-[var(--accent)]">
           {label}
         </span>
@@ -39,10 +39,18 @@ export function FeatureSection({ label, headline, bullets, mockup, reverse }: Fe
             </li>
           ))}
         </ul>
-      </div>
+      </motion.div>
 
-      {/* Mockup */}
-      <div className="flex-1">{mockup}</div>
-    </motion.div>
+      {/* Mockup — slight delay so it trails copy */}
+      <motion.div
+        className="flex-1"
+        initial={{ opacity: 0, y: 24 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-80px" }}
+        transition={{ duration: 0.4, delay: 0.08, ease: "easeOut" }}
+      >
+        {mockup}
+      </motion.div>
+    </div>
   );
 }

@@ -1,3 +1,6 @@
+"use client";
+
+import { motion } from "motion/react";
 import { MessageSquare, BookOpen, Map } from "lucide-react";
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://freebase.app";
@@ -6,7 +9,7 @@ const surfaces = [
   {
     icon: MessageSquare,
     title: "Feedback Form",
-    description: "Floating button + slide-in panel. Users submit ideas without leaving your app.",
+    description: "Floating button + floating window. Users submit ideas without leaving your app.",
   },
   {
     icon: BookOpen,
@@ -16,7 +19,7 @@ const surfaces = [
   {
     icon: Map,
     title: "Roadmap Panel",
-    description: "Read-only kanban panel. Users see what's planned and in progress.",
+    description: "Read-only kanban window. Users see what's planned and in progress.",
   },
 ];
 
@@ -24,7 +27,13 @@ export function WidgetSnippet() {
   return (
     <section className="border-t border-[var(--border)] px-8 py-20">
       <div className="mx-auto max-w-3xl">
-        <div className="mb-10 text-center">
+        <motion.div
+          className="mb-10 text-center"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-60px" }}
+          transition={{ duration: 0.4, ease: "easeOut" }}
+        >
           <h2
             className="mb-3 text-3xl font-semibold tracking-tight text-[var(--text-primary)] sm:text-4xl"
             style={{ fontFamily: "var(--font-cal)" }}
@@ -34,9 +43,15 @@ export function WidgetSnippet() {
           <p className="text-sm text-[var(--text-secondary)]">
             Drop a script tag, call init. Works with React, Vue, plain HTML — any framework.
           </p>
-        </div>
+        </motion.div>
 
-        <div className="mb-8 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] p-5">
+        <motion.div
+          className="mb-8 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] p-5"
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-60px" }}
+          transition={{ duration: 0.4, delay: 0.08, ease: "easeOut" }}
+        >
           <div className="mb-2 flex items-center gap-2">
             <div className="h-2.5 w-2.5 rounded-full bg-[var(--error)]/60" />
             <div className="h-2.5 w-2.5 rounded-full bg-[var(--warning)]/60" />
@@ -48,20 +63,24 @@ export function WidgetSnippet() {
   window.Freebase?.('init', { org: 'your-org' })
 </script>`}</code>
           </pre>
-        </div>
+        </motion.div>
 
         <div className="grid gap-4 sm:grid-cols-3">
-          {surfaces.map(({ icon: Icon, title, description }) => (
-            <div
+          {surfaces.map(({ icon: Icon, title, description }, i) => (
+            <motion.div
               key={title}
               className="rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] p-4"
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-40px" }}
+              transition={{ duration: 0.35, delay: 0.14 + i * 0.06, ease: "easeOut" }}
             >
               <div className="mb-3 flex h-7 w-7 items-center justify-center rounded-[var(--radius)] bg-[var(--accent-subtle)]">
                 <Icon className="h-3.5 w-3.5 text-[var(--accent)]" />
               </div>
               <h3 className="mb-1 text-sm font-semibold text-[var(--text-primary)]">{title}</h3>
               <p className="text-xs text-[var(--text-secondary)]">{description}</p>
-            </div>
+            </motion.div>
           ))}
         </div>
       </div>
