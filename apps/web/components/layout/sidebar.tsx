@@ -7,11 +7,11 @@ import {
   BookOpen,
   Map,
   Settings,
-  LayoutDashboard,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Logo } from "@/components/ui/logo";
 
 interface SidebarProps {
   orgSlug: string;
@@ -45,9 +45,7 @@ export function Sidebar({ orgSlug, orgName, userEmail }: SidebarProps) {
     >
       {/* Logo + org name */}
       <div className="flex h-14 items-center gap-2.5 border-b border-[var(--border)] px-4">
-        <div className="flex h-6 w-6 items-center justify-center rounded-[var(--radius-sm)] bg-[var(--accent)]">
-          <LayoutDashboard className="h-3.5 w-3.5 text-[var(--accent-foreground)]" />
-        </div>
+        <Logo size={18} />
         <span className="text-sm font-semibold text-[var(--text-primary)] truncate">
           {orgName}
         </span>

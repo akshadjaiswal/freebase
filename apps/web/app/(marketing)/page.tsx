@@ -12,6 +12,7 @@ import {
   WidgetMockup,
 } from "@/components/marketing/mockups";
 import Link from "next/link";
+import { Logo } from "@/components/ui/logo";
 
 const features = [
   {
@@ -90,14 +91,15 @@ export default function HomePage() {
       {/* Footer */}
       <footer className="border-t border-[var(--border)] px-8 py-8">
         <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-4 sm:flex-row">
-          <div>
+          <div className="flex items-center gap-2">
+            <Logo size={18} />
             <span
               className="text-sm font-semibold text-[var(--text-primary)]"
               style={{ fontFamily: "var(--font-cal)" }}
             >
               Freebase
             </span>
-            <span className="ml-2 text-xs text-[var(--text-muted)]">The free feedback platform</span>
+            <span className="text-xs text-[var(--text-muted)]">— The free feedback platform</span>
           </div>
           <div className="flex items-center gap-5">
             <a
