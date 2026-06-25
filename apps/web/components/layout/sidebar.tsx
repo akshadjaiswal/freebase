@@ -7,11 +7,15 @@ import {
   BookOpen,
   Map,
   Settings,
+  LogOut,
+  Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Logo } from "@/components/ui/logo";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 interface SidebarProps {
   orgSlug: string;
@@ -27,7 +31,15 @@ const navItems = [
 
 export function Sidebar({ orgSlug, orgName, userEmail }: SidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const base = `/${orgSlug}`;
+  const [signingOut, setSigningOut] = useState(false);
+
+  async function handleSignout() {
+    setSigningOut(true);
+    await fetch(`/api/auth/signout?org=${orgSlug}`, { method: "POST" });
+    router.push("/login");
+  }
 
   function isActive(href: string) {
     return pathname.startsWith(`${base}/${href}`);
@@ -98,7 +110,7 @@ export function Sidebar({ orgSlug, orgName, userEmail }: SidebarProps) {
         </button>
       </div>
 
-      {/* Footer: user + theme toggle */}
+      {/* Footer: user + theme toggle + logout */}
       <div className="flex items-center justify-between border-t border-[var(--border)] px-3 py-2.5">
         <div className="flex items-center gap-2 min-w-0">
           <Avatar className="h-6 w-6 shrink-0">
@@ -106,7 +118,20 @@ export function Sidebar({ orgSlug, orgName, userEmail }: SidebarProps) {
           </Avatar>
           <span className="text-xs text-[var(--text-muted)] truncate">{userEmail}</span>
         </div>
-        <ThemeToggle />
+        <div className="flex items-center gap-1 shrink-0">
+          <ThemeToggle />
+          <button
+            onClick={handleSignout}
+            disabled={signingOut}
+            aria-label="Sign out"
+            className="flex h-7 w-7 items-center justify-center rounded-[var(--radius)] text-[var(--text-muted)] hover:bg-[var(--surface-raised)] hover:text-[var(--text-primary)] transition-colors disabled:opacity-50"
+          >
+            {signingOut
+              ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              : <LogOut className="h-3.5 w-3.5" />
+            }
+          </button>
+        </div>
       </div>
     </aside>
   );

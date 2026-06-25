@@ -3,7 +3,8 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { LayoutDashboard } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import { Logo } from "@/components/ui/logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -83,9 +84,7 @@ export default function NewOrgPage() {
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="mb-8 flex flex-col items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-[var(--radius-md)] bg-[var(--accent)]">
-            <LayoutDashboard className="h-5 w-5 text-[var(--accent-foreground)]" />
-          </div>
+          <Logo size={36} />
           <div className="text-center">
             <h1 className="text-lg font-semibold text-[var(--text-primary)]">
               Create your org
@@ -170,7 +169,8 @@ export default function NewOrgPage() {
             <p className="text-xs text-[var(--error)]">{errors.form}</p>
           )}
 
-          <Button type="submit" className="w-full" disabled={isPending}>
+          <Button type="submit" className="w-full gap-2" disabled={isPending}>
+            {isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
             {isPending ? "Creating org…" : "Create org"}
           </Button>
         </form>
