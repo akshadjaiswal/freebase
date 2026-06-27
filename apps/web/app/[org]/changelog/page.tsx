@@ -14,7 +14,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { org: orgSlug } = await params;
   const org = await getOrgBySlug(orgSlug);
   if (!org) return {};
-  return { title: `${org.name} — Changelog` };
+  const title = `${org.name} — Changelog`;
+  const description = `Product updates and new features from ${org.name}.`;
+  return {
+    title,
+    description,
+    openGraph: { title, description, type: "website" },
+    twitter: { card: "summary" as const, title, description },
+  };
 }
 
 export default async function ChangelogPage({ params }: Props) {

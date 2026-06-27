@@ -13,16 +13,46 @@ interface Props {
   params: Promise<{ org: string; slug: string }>;
 }
 
+function tiptapToText(body: unknown): string {
+  if (!body || typeof body !== "object") return "";
+  const doc = body as { content?: unknown[] };
+  if (!Array.isArray(doc.content)) return "";
+  const parts: string[] = [];
+  const extract = (nodes: unknown[]) => {
+    for (const n of nodes) {
+      if (!n || typeof n !== "object") continue;
+      const node = n as { text?: string; content?: unknown[] };
+      if (node.text) parts.push(node.text);
+      if (Array.isArray(node.content)) extract(node.content);
+    }
+  };
+  extract(doc.content);
+  return parts.join(" ");
+}
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { org: orgSlug, slug } = await params;
   const org = await prisma.organization.findUnique({ where: { slug: orgSlug }, select: { id: true, name: true } });
   if (!org) return {};
   const post = await prisma.changelogPost.findUnique({
     where: { orgId_slug: { orgId: org.id, slug } },
-    select: { title: true },
+    select: { title: true, body: true, publishedAt: true },
   });
   if (!post) return {};
-  return { title: `${post.title} — ${org.name}` };
+  const excerpt = tiptapToText(post.body).slice(0, 160) || undefined;
+  const title = `${post.title} — ${org.name}`;
+  return {
+    title,
+    description: excerpt,
+    openGraph: {
+      type: "article",
+      title: post.title,
+      description: excerpt,
+      publishedTime: post.publishedAt?.toISOString(),
+      authors: [org.name],
+    },
+    twitter: { card: "summary" as const, title, description: excerpt },
+  };
 }
 
 export default async function ChangelogPostPage({ params }: Props) {
