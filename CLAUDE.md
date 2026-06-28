@@ -84,7 +84,9 @@ This file is the primary context for building Freebase. Read it at the start of 
 - `apps/web/components/ui/` — owned shadcn/ui components (includes `copy-button.tsx`, `section-header.tsx`)
 - `apps/web/components/feedback/category-chip.tsx` — shared category color chip (`${color}18` alpha pattern)
 - `apps/web/components/layout/sidebar.tsx` — admin sidebar
-- `apps/web/components/layout/topbar.tsx` — public pages topbar (Feedback/Changelog/Roadmap nav)
+- `apps/web/components/layout/topbar.tsx` — public pages topbar (Feedback/Changelog/Roadmap nav); accepts `accentColor` (injects CSS vars), `logoUrl`, `wide` props
+- `apps/web/components/layout/page-hero.tsx` — org identity zone between topbar + main; shows orgName, subtitle, accent bar; fade-in animation; accepts `accentColor`, `wide`, `actions` props
+- `apps/web/lib/color.ts` — `darkenHex(hex)` utility; used by topbar for `--accent-hover` CSS var
 
 ### Phase 2 — Feedback Board
 - `apps/web/app/[org]/feedback/page.tsx` — public feedback board page (Server Component)
@@ -117,7 +119,7 @@ This file is the primary context for building Freebase. Read it at the start of 
 - `apps/web/components/changelog/changelog-entry.tsx` — public card + LabelBadge component
 - `apps/web/components/changelog/subscribe-button.tsx` — email subscribe modal (env-gated)
 - `apps/web/app/[org]/changelog/page.tsx` — public list, year/month grouped
-- `apps/web/app/[org]/changelog/[slug]/page.tsx` — single post with server-rendered HTML (generateHTML)
+- `apps/web/app/[org]/changelog/[slug]/page.tsx` — single post with server-rendered HTML (generateHTML); passes `accentColor` to Topbar; OG article metadata with tiptap excerpt
 - `apps/web/app/[org]/changelog/rss.xml/route.ts` — RSS 2.0 feed
 - `apps/web/app/[org]/changelog/confirm/page.tsx` — subscription confirmation page (HMAC token verify)
 - `apps/web/app/api/v1/orgs/[org]/changelog/route.ts` — GET list, POST create
@@ -142,10 +144,10 @@ This file is the primary context for building Freebase. Read it at the start of 
 - `apps/widget/vite.config.ts` — IIFE lib mode, `fileName: () => "sdk.js"`, esbuild minify
 - `apps/widget/src/index.ts` — `window.Freebase` command queue boot, dispatches init/identify/open/getUnreadCount
 - `apps/widget/src/api.ts` — fetch helpers, base URL, JWT header attachment via `X-Freebase-User`
-- `apps/widget/src/styles.ts` — full CSS string injected via `<style>` tag, CSS vars for theming
-- `apps/widget/src/feedback.ts` — floating pencil button + slide-in panel (380px) + form + success state
-- `apps/widget/src/changelog.ts` — "What's new" button + unread badge (localStorage) + popup (360×480px)
-- `apps/widget/src/roadmap.ts` — roadmap floating button (stacked above feedback) + slide-in panel + read-only kanban
+- `apps/widget/src/styles.ts` — full CSS string injected via `<style>` tag; unified `.fb-window` class replaces old `.fb-panel` / `.fb-popup` / `.fb-overlay`; scale+translateY open animation via `cubic-bezier(0.16,1,0.3,1)`
+- `apps/widget/src/feedback.ts` — floating pencil button + `.fb-window` (560px height, bottom:88px) + form + success state; no overlay
+- `apps/widget/src/changelog.ts` — "What's new" button + unread badge (localStorage) + `.fb-window` (500px height)
+- `apps/widget/src/roadmap.ts` — roadmap floating button (stacked above feedback) + `.fb-window` (580px height) + read-only kanban; no overlay
 - `apps/web/app/api/widget/[org]/config/route.ts` — GET org name/accentColor/categories (public, no auth)
 - `apps/web/app/api/widget/[org]/identify/route.ts` — POST verify JWT, rate limited 60/min
 - `apps/web/public/cdn/v1/sdk.js` — built bundle (6.2 kB gzip, <20KB limit)
@@ -169,6 +171,16 @@ gzip -c apps/web/public/cdn/v1/sdk.js | wc -c   # must be < 20480
 <script src="/cdn/v1/sdk.js" async></script>
 ```
 SDK boots → drains the `.q` queue → replaces the stub.
+
+### Marketing & Public Page Polish (post-Phase 6)
+- `apps/web/app/(marketing)/` — full redesign: `MarketingNav`, `Hero` (dot grid + radial glow + stagger entrance), `FeatureSection`, `HowItWorks`, `WidgetSnippet`, `ComparisonTable`, `FinalCta` — all in `components/marketing/`
+- `apps/web/components/marketing/hero.tsx` — radial glow + dot grid background; `motion` staggered entrance (badge→h1→p→buttons→trust, delays 0/0.08/0.16/0.22/0.28)
+- Public pages (`feedback`, `changelog`, `roadmap`) — all use `<PageHero>` + `accentColor` from DB injected into topbar CSS vars; full `generateMetadata` with description + OG + Twitter cards
+- `apps/web/app/robots.ts` — blocks `/admin /api/ /login /new` from crawlers, points to sitemap
+- `apps/web/app/sitemap.ts` — static marketing routes (`/` + `/new`)
+- `apps/web/app/manifest.ts` — PWA manifest, `theme_color: "#10b981"`, standalone
+- `apps/web/app/opengraph-image.tsx` — 1200×630 dark OG card (two-square logo mark + wordmark + accent bar)
+- `apps/web/app/layout.tsx` — `metadataBase`, full `openGraph` + `twitter` blocks; `og:title` template `%s | Freebase`
 
 ### Phase 6 — API Keys, Webhooks, Settings, Docker
 - `apps/web/app/[org]/admin/settings/page.tsx` — Server Component: loads org, API keys, webhooks; passes `emailEnabled` flag; renders SettingsClient
@@ -401,6 +413,11 @@ All decisions are locked in `/research/`:
 - [x] UX: comment loading skeleton has min-h-[200px] to prevent CLS
 - [x] Code quality: CategoryChip component extracts `${color}18` hex-alpha pattern from 4 files; noUnusedLocals + noUnusedParameters enabled in tsconfig
 - [x] Tests: vitest@2 + 8 passing tests covering DELETE atomicity, Zod error shape, cursor pagination hasMore/nextCursor, comment POST validation
+- [x] Marketing: full redesign — MarketingNav, Hero (dot grid + radial glow + stagger), FeatureSection, HowItWorks, WidgetSnippet, ComparisonTable, FinalCta; scroll-triggered entrance animations via `motion` `whileInView`
+- [x] Widget: all 3 surfaces (feedback, changelog, roadmap) unified to `.fb-window` floating window with scale-from-origin animation; removed overlay pattern
+- [x] Public pages: `PageHero` component (org name + subtitle + accent bar) on all 3 public pages; `accentColor` injected as CSS vars into topbar; `darkenHex` utility in `lib/color.ts`
+- [x] SEO: `robots.ts`, `sitemap.ts`, `manifest.ts`, `opengraph-image.tsx`; `metadataBase` + full OG/Twitter blocks in root layout; `generateMetadata` with description + OG + Twitter on all public org pages + changelog detail
+- [x] Copy: em dashes removed from all visible UI text (marketing bullets, footer, auth form labels, admin dialogs); kept in metadata title strings where correct
 
 ## Prisma Client Note (pnpm monorepo)
 
