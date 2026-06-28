@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { z } from "zod";
 import { revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { verifyAdminAccess } from "@/lib/auth";
+import { verifyAdminOrApiKey } from "@/lib/auth";
 import { errors, ok } from "@/lib/api";
 import { dispatchWebhook } from "@/lib/webhooks";
 import { logger } from "@/lib/logger";
@@ -57,11 +57,11 @@ const updateSchema = z.object({
 export async function PATCH(req: NextRequest, { params }: RouteParams) {
   const { org: orgSlug, slug } = await params;
 
-  const admin = await verifyAdminAccess(orgSlug);
+  const admin = await verifyAdminOrApiKey(req, orgSlug);
   if (!admin) return errors.unauthorized("Admin access required.");
 
   const post = await prisma.changelogPost.findUnique({
-    where: { orgId_slug: { orgId: admin.org.id, slug } },
+    where: { orgId_slug: { orgId: admin.orgId, slug } },
   });
   if (!post) return errors.notFound("Changelog post not found.");
 
@@ -104,19 +104,23 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://freebase.app";
     const postUrl = `${appUrl}/${orgSlug}/changelog/${finalSlug}`;
 
-    prisma.changelogSubscriber
-      .findMany({ where: { orgId: admin.org.id, confirmed: true } })
-      .then(async (subscribers) => {
+    prisma.organization
+      .findUnique({ where: { id: admin.orgId }, select: { name: true } })
+      .then(async (org) => {
+        const orgName = org?.name ?? orgSlug;
+        const subscribers = await prisma.changelogSubscriber.findMany({
+          where: { orgId: admin.orgId, confirmed: true },
+        });
         if (subscribers.length === 0) return;
         const { Resend } = await import("resend");
         const resend = new Resend(process.env.RESEND_API_KEY);
         await Promise.allSettled(
           subscribers.map((sub) =>
             resend.emails.send({
-              from: `${admin.org.name} <noreply@${process.env.EMAIL_FROM_DOMAIN}>`,
+              from: `${orgName} <noreply@${process.env.EMAIL_FROM_DOMAIN}>`,
               to: sub.email,
               subject: `New update: ${finalTitle}`,
-              html: `<p>A new update was published by <strong>${escapeHtml(admin.org.name)}</strong>.</p><h2>${escapeHtml(finalTitle)}</h2><p><a href="${postUrl}">Read the full update →</a></p>`,
+              html: `<p>A new update was published by <strong>${escapeHtml(orgName)}</strong>.</p><h2>${escapeHtml(finalTitle)}</h2><p><a href="${postUrl}">Read the full update →</a></p>`,
             })
           )
         );
@@ -124,10 +128,10 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
       .catch((e) => logger.error("Failed to send subscriber emails", { orgSlug, error: e instanceof Error ? e.message : String(e) }));
   }
 
-  revalidateTag(`changelog-${admin.org.id}`);
+  revalidateTag(`changelog-${admin.orgId}`);
 
   if (isPublishing) {
-    dispatchWebhook(admin.org.id, {
+    dispatchWebhook(admin.orgId, {
       event: "changelog.published",
       org: orgSlug,
       data: { post: { id: updated.id, title: updated.title, slug: updated.slug } },
@@ -137,20 +141,20 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
   return ok(updated);
 }
 
-export async function DELETE(_req: NextRequest, { params }: RouteParams) {
+export async function DELETE(req: NextRequest, { params }: RouteParams) {
   const { org: orgSlug, slug } = await params;
 
-  const admin = await verifyAdminAccess(orgSlug);
+  const admin = await verifyAdminOrApiKey(req, orgSlug);
   if (!admin) return errors.unauthorized("Admin access required.");
 
   const post = await prisma.changelogPost.findUnique({
-    where: { orgId_slug: { orgId: admin.org.id, slug } },
+    where: { orgId_slug: { orgId: admin.orgId, slug } },
   });
   if (!post) return errors.notFound("Changelog post not found.");
 
   await prisma.changelogPost.delete({ where: { id: post.id } });
 
-  revalidateTag(`changelog-${admin.org.id}`);
+  revalidateTag(`changelog-${admin.orgId}`);
 
   return new Response(null, { status: 204 });
 }

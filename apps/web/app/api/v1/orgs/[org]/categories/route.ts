@@ -3,7 +3,7 @@ import { z } from "zod";
 import { revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { errors, ok } from "@/lib/api";
-import { verifyAdminAccess } from "@/lib/auth";
+import { verifyAdminOrApiKey } from "@/lib/auth";
 
 export async function GET(
   _request: NextRequest,
@@ -40,7 +40,7 @@ export async function POST(
 ) {
   const { org: orgSlug } = await params;
 
-  const admin = await verifyAdminAccess(orgSlug);
+  const admin = await verifyAdminOrApiKey(request, orgSlug);
   if (!admin) return errors.unauthorized("Admin access required.");
 
   let body: unknown;
@@ -59,19 +59,19 @@ export async function POST(
   }
 
   const existing = await prisma.category.findFirst({
-    where: { orgId: admin.org.id, name: { equals: parsed.data.name, mode: "insensitive" } },
+    where: { orgId: admin.orgId, name: { equals: parsed.data.name, mode: "insensitive" } },
   });
   if (existing) return errors.conflict("A category with this name already exists.");
 
   const category = await prisma.category.create({
     data: {
-      orgId: admin.org.id,
+      orgId: admin.orgId,
       name: parsed.data.name,
       color: parsed.data.color,
     },
   });
 
-  revalidateTag(`feedback-${admin.org.id}`);
+  revalidateTag(`feedback-${admin.orgId}`);
 
   return ok({ id: category.id, name: category.name, color: category.color }, 201);
 }

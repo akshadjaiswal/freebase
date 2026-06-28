@@ -3,7 +3,7 @@ import { z } from "zod";
 import { revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { errors, ok } from "@/lib/api";
-import { verifyAdminAccess } from "@/lib/auth";
+import { verifyAdminOrApiKey } from "@/lib/auth";
 
 const patchSchema = z.object({
   title: z.string().min(1).max(200).transform((s) => s.trim()).optional(),
@@ -27,7 +27,7 @@ export async function PATCH(
 ) {
   const { org: orgSlug, id } = await params;
 
-  const adminCheck = await verifyAdminAccess(orgSlug).catch(() => null);
+  const adminCheck = await verifyAdminOrApiKey(request, orgSlug).catch(() => null);
   if (!adminCheck) return errors.forbidden("Admin access required");
 
   const org = await prisma.organization.findUnique({
@@ -104,12 +104,12 @@ export async function PATCH(
 
 // DELETE /api/v1/orgs/[org]/roadmap/[id] — delete roadmap item (admin only)
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ org: string; id: string }> }
 ) {
   const { org: orgSlug, id } = await params;
 
-  const adminCheck = await verifyAdminAccess(orgSlug).catch(() => null);
+  const adminCheck = await verifyAdminOrApiKey(request, orgSlug).catch(() => null);
   if (!adminCheck) return errors.forbidden("Admin access required");
 
   const org = await prisma.organization.findUnique({

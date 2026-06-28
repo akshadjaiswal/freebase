@@ -1,22 +1,22 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { errors } from "@/lib/api";
-import { verifyAdminAccess } from "@/lib/auth";
+import { verifyAdminOrApiKey } from "@/lib/auth";
 
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ org: string; id: string; commentId: string }> }
 ) {
   const { org: orgSlug, id: postId, commentId } = await params;
 
-  const admin = await verifyAdminAccess(orgSlug);
+  const admin = await verifyAdminOrApiKey(request, orgSlug);
   if (!admin) return errors.unauthorized("Admin access required.");
 
   const comment = await prisma.feedbackComment.findFirst({
     where: {
       id: commentId,
       postId,
-      post: { orgId: admin.org.id },
+      post: { orgId: admin.orgId },
     },
   });
   if (!comment) return errors.notFound("Comment not found.");

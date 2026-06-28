@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { z } from "zod";
 import { revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { verifyAdminAccess, verifyApiKey } from "@/lib/auth";
+import { verifyAdminOrApiKey } from "@/lib/auth";
 import { errors, ok, encodeCursor, decodeCursor } from "@/lib/api";
 
 function tiptapToText(body: unknown): string {
@@ -48,9 +48,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ org:
   if (!validStatuses.includes(status)) return errors.badRequest("Invalid status filter.");
 
   if (status !== "published") {
-    const admin = await verifyAdminAccess(orgSlug).catch(() => null);
-    const apiAuth = admin ? null : await verifyApiKey(req.headers.get("authorization"), orgSlug).catch(() => null);
-    if (!admin && !apiAuth) return errors.unauthorized();
+    const auth = await verifyAdminOrApiKey(req, orgSlug).catch(() => null);
+    if (!auth) return errors.unauthorized();
   }
 
   const where = {
@@ -122,7 +121,7 @@ const createSchema = z.object({
 export async function POST(req: NextRequest, { params }: { params: Promise<{ org: string }> }) {
   const { org: orgSlug } = await params;
 
-  const admin = await verifyAdminAccess(orgSlug);
+  const admin = await verifyAdminOrApiKey(req, orgSlug);
   if (!admin) return errors.unauthorized("Admin access required.");
 
   const body = await req.json().catch(() => null);
@@ -141,7 +140,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ org
   let attempt = 0;
   while (true) {
     const existing = await prisma.changelogPost.findUnique({
-      where: { orgId_slug: { orgId: admin.org.id, slug: finalSlug } },
+      where: { orgId_slug: { orgId: admin.orgId, slug: finalSlug } },
     });
     if (!existing) break;
     attempt++;
@@ -150,7 +149,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ org
 
   const post = await prisma.changelogPost.create({
     data: {
-      orgId: admin.org.id,
+      orgId: admin.orgId,
       title,
       slug: finalSlug,
       body: richBody as unknown as import("@prisma/client").Prisma.InputJsonValue,
@@ -160,7 +159,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ org
     },
   });
 
-  revalidateTag(`changelog-${admin.org.id}`);
+  revalidateTag(`changelog-${admin.orgId}`);
 
   return ok(post, 201);
 }

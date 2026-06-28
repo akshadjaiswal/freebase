@@ -3,7 +3,7 @@ import { z } from "zod";
 import { revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { errors, ok } from "@/lib/api";
-import { verifyAdminAccess } from "@/lib/auth";
+import { verifyAdminAccess, verifyAdminOrApiKey } from "@/lib/auth";
 import { dispatchWebhook } from "@/lib/webhooks";
 
 export async function GET(
@@ -60,11 +60,11 @@ export async function PATCH(
 ) {
   const { org: orgSlug, id } = await params;
 
-  const admin = await verifyAdminAccess(orgSlug);
+  const admin = await verifyAdminOrApiKey(request, orgSlug);
   if (!admin) return errors.unauthorized("Admin access required.");
 
   const post = await prisma.feedbackPost.findFirst({
-    where: { id, orgId: admin.org.id },
+    where: { id, orgId: admin.orgId },
   });
   if (!post) return errors.notFound("Post not found.");
 
@@ -93,7 +93,7 @@ export async function PATCH(
     },
   });
 
-  revalidateTag(`feedback-${admin.org.id}`);
+  revalidateTag(`feedback-${admin.orgId}`);
 
   // Sync linked roadmap item status when post status changes
   if (parsed.data.status && parsed.data.status !== previousStatus) {
@@ -108,10 +108,10 @@ export async function PATCH(
         where: { feedbackPostId: id },
         data: { status: roadmapStatus },
       });
-      revalidateTag(`roadmap-${admin.org.id}`);
+      revalidateTag(`roadmap-${admin.orgId}`);
     }
 
-    dispatchWebhook(admin.org.id, {
+    dispatchWebhook(admin.orgId, {
       event: "post.status_changed",
       org: orgSlug,
       data: {
@@ -138,22 +138,22 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ org: string; id: string }> }
 ) {
   const { org: orgSlug, id } = await params;
 
-  const admin = await verifyAdminAccess(orgSlug);
+  const admin = await verifyAdminOrApiKey(request, orgSlug);
   if (!admin) return errors.unauthorized("Admin access required.");
 
   const post = await prisma.feedbackPost.findFirst({
-    where: { id, orgId: admin.org.id },
+    where: { id, orgId: admin.orgId },
   });
   if (!post) return errors.notFound("Post not found.");
 
   await prisma.feedbackPost.delete({ where: { id } });
 
-  revalidateTag(`feedback-${admin.org.id}`);
+  revalidateTag(`feedback-${admin.orgId}`);
 
   return new Response(null, { status: 204 });
 }

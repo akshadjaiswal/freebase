@@ -3,7 +3,7 @@ import { z } from "zod";
 import { revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { errors, ok } from "@/lib/api";
-import { verifyAdminAccess } from "@/lib/auth";
+import { verifyAdminAccess, verifyAdminOrApiKey } from "@/lib/auth";
 
 // GET /api/v1/orgs/[org]/roadmap — grouped by status
 // Public: returns only visible=true items
@@ -79,7 +79,7 @@ export async function POST(
 ) {
   const { org: orgSlug } = await params;
 
-  const adminCheck = await verifyAdminAccess(orgSlug).catch(() => null);
+  const adminCheck = await verifyAdminOrApiKey(request, orgSlug).catch(() => null);
   if (!adminCheck) return errors.forbidden("Admin access required");
 
   const org = await prisma.organization.findUnique({
