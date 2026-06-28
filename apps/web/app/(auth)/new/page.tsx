@@ -114,7 +114,7 @@ export default function NewOrgPage() {
             <Label htmlFor="slug">
               URL slug
               <span className="ml-1 text-[var(--text-muted)]">
-                — used in your org&apos;s public URL
+                · used in your org&apos;s public URL
               </span>
             </Label>
             <div className="flex items-center rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] focus-within:ring-1 focus-within:ring-[var(--accent)] focus-within:border-[var(--accent)] transition-colors">

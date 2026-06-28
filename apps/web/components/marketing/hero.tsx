@@ -54,7 +54,7 @@ export function Hero() {
         </motion.h1>
 
         <motion.p {...fadeUp(0.16)} className="mb-8 text-lg text-[var(--text-secondary)]">
-          Collect feedback, ship changelogs, and publish your roadmap — all in one place.{" "}
+          Collect feedback, ship changelogs, and publish your roadmap. All in one place.{" "}
           <span className="text-[var(--text-primary)]">Free forever.</span>
         </motion.p>
 

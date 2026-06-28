@@ -38,7 +38,7 @@ const features = [
     bullets: [
       "Public board where users submit ideas, vote, and comment",
       "Admin manages statuses, pins top requests, and organizes by category",
-      "Embed directly in your app — users never need to leave",
+      "Embed directly in your app. Users never need to leave.",
     ],
     mockup: <FeedbackBoardMockup />,
     reverse: false,
@@ -69,7 +69,7 @@ const features = [
     label: "Embeddable Widget",
     headline: "Meet users where they are",
     bullets: [
-      "Single script tag — works with React, Vue, or plain HTML",
+      "Single script tag. Works with React, Vue, or plain HTML.",
       "Feedback form, changelog popup, and roadmap panel in one bundle",
       "Under 20KB gzip. JWT-based user identification.",
     ],
@@ -116,7 +116,7 @@ export default function HomePage() {
             >
               Freebase
             </span>
-            <span className="text-xs text-[var(--text-muted)]">— The free feedback platform</span>
+            <span className="text-xs text-[var(--text-muted)]">· The free feedback platform</span>
           </div>
           <div className="flex items-center gap-5">
             <a

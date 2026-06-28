@@ -8,7 +8,7 @@ const steps = [
     number: "01",
     icon: UserPlus,
     title: "Create your board",
-    description: "Sign up in seconds. Get your own org URL with a feedback board, changelog, and roadmap — ready to share with users.",
+    description: "Sign up in seconds. Get your own org URL with a feedback board, changelog, and roadmap. Ready to share with users.",
   },
   {
     number: "02",

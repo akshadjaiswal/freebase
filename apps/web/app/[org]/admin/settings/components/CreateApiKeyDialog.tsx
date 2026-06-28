@@ -33,7 +33,7 @@ export function CreateApiKeyDialog({ open, onClose, newKeyName, setNewKeyName, c
         </DialogHeader>
         {createdKey ? (
           <div className="space-y-3">
-            <p className="text-sm text-[var(--text-secondary)]">Copy your key now — it will not be shown again.</p>
+            <p className="text-sm text-[var(--text-secondary)]">Copy your key now. It will not be shown again.</p>
             <div className="flex items-center gap-2 rounded-[var(--radius)] border border-[var(--accent)]/40 bg-[var(--accent-subtle)] px-3 py-2">
               <code className="flex-1 text-xs font-mono text-[var(--accent)] break-all">{createdKey}</code>
               <CopyButton text={createdKey} />

@@ -41,7 +41,7 @@ export function WidgetSnippet() {
             Add it to your app in 2 lines
           </h2>
           <p className="text-sm text-[var(--text-secondary)]">
-            Drop a script tag, call init. Works with React, Vue, plain HTML — any framework.
+            Drop a script tag, call init. Works with React, Vue, plain HTML, any framework.
           </p>
         </motion.div>
 
