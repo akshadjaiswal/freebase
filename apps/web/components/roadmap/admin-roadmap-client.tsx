@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -160,6 +160,7 @@ function AdminColumn({
 }
 
 export function AdminRoadmapClient({ orgSlug, initialData, feedbackPosts }: Props) {
+  const [mounted, setMounted] = useState(false);
   const [data, setData] = useState<RoadmapData>(initialData);
   const [activeItem, setActiveItem] = useState<RoadmapItem | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -167,6 +168,8 @@ export function AdminRoadmapClient({ orgSlug, initialData, feedbackPosts }: Prop
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
   );
+
+  useEffect(() => { setMounted(true); }, []);
 
   const findItem = useCallback(
     (id: string): { item: RoadmapItem; colKey: keyof RoadmapData } | null => {
@@ -342,35 +345,37 @@ export function AdminRoadmapClient({ orgSlug, initialData, feedbackPosts }: Prop
         </button>
       </div>
 
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCorners}
-        onDragStart={handleDragStart}
-        onDragOver={handleDragOver}
-        onDragEnd={handleDragEnd}
-      >
-        <div className="overflow-x-auto">
-          <div className="flex gap-5 min-w-[860px]">
-            {STATUS_LIST.map((status) => {
-              const colKey = COLUMN_IDS[status];
-              return (
-                <AdminColumn
-                  key={colKey}
-                  colKey={colKey}
-                  status={status}
-                  items={data[colKey]}
-                  onToggleVisible={handleToggleVisible}
-                  onDelete={handleDelete}
-                />
-              );
-            })}
+      {mounted && (
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCorners}
+          onDragStart={handleDragStart}
+          onDragOver={handleDragOver}
+          onDragEnd={handleDragEnd}
+        >
+          <div className="overflow-x-auto">
+            <div className="flex gap-5 min-w-[860px]">
+              {STATUS_LIST.map((status) => {
+                const colKey = COLUMN_IDS[status];
+                return (
+                  <AdminColumn
+                    key={colKey}
+                    colKey={colKey}
+                    status={status}
+                    items={data[colKey]}
+                    onToggleVisible={handleToggleVisible}
+                    onDelete={handleDelete}
+                  />
+                );
+              })}
+            </div>
           </div>
-        </div>
 
-        <DragOverlay>
-          {activeItem && <RoadmapCard item={activeItem} admin isDragging={false} />}
-        </DragOverlay>
-      </DndContext>
+          <DragOverlay>
+            {activeItem && <RoadmapCard item={activeItem} admin isDragging={false} />}
+          </DragOverlay>
+        </DndContext>
+      )}
 
       {showAddModal && (
         <AddRoadmapItemModal

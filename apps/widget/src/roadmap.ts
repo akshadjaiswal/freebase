@@ -13,7 +13,6 @@ export function createRoadmapWidget(
 ) {
   const posClass = position === "bottom-left" ? "fb-left" : "fb-right";
   let isOpen = false;
-  let dataLoaded = false;
 
   // Floating button (map icon)
   const btn = document.createElement("button");
@@ -36,11 +35,7 @@ export function createRoadmapWidget(
     closeOthers();
     isOpen = true;
     panel.classList.add("fb-open");
-
-    if (!dataLoaded) {
-      dataLoaded = true;
-      loadRoadmap();
-    }
+    loadRoadmap();
   }
 
   function closePanel() {

@@ -76,7 +76,7 @@ This file is the primary context for building Freebase. Read it at the start of 
 - `apps/web/lib/supabase/server.ts` — server Supabase client
 - `apps/web/lib/supabase/client.ts` — browser Supabase client
 - `apps/web/lib/supabase/middleware.ts` — session refresh helper
-- `apps/web/lib/auth.ts` — verifyAdminAccess() wrapped with React.cache() (per-request memoized), verifyApiKey()
+- `apps/web/lib/auth.ts` — verifyAdminAccess() wrapped with React.cache() (per-request memoized), verifyApiKey(), verifyAdminOrApiKey() (session-first, API-key fallback — used by all write/admin API routes)
 - `apps/web/lib/data.ts` — unstable_cache wrappers for all page data. Admin: getFeedbackPageData, getChangelogPageData, getRoadmapPageData, getSettingsPageData. Public: getOrgBySlug (300s TTL), getPublicFeedbackPageData, getPublicChangelogPageData, getPublicRoadmapPageData (30s TTL) — all tagged for revalidation
 - `apps/web/lib/api.ts` — RFC 9457 error helpers, cursor pagination
 - `apps/web/lib/jwt.ts` — widget JWT verify, webhook HMAC
@@ -418,6 +418,8 @@ All decisions are locked in `/research/`:
 - [x] Public pages: `PageHero` component (org name + subtitle + accent bar) on all 3 public pages; `accentColor` injected as CSS vars into topbar; `darkenHex` utility in `lib/color.ts`
 - [x] SEO: `robots.ts`, `sitemap.ts`, `manifest.ts`, `opengraph-image.tsx`; `metadataBase` + full OG/Twitter blocks in root layout; `generateMetadata` with description + OG + Twitter on all public org pages + changelog detail
 - [x] Copy: em dashes removed from all visible UI text (marketing bullets, footer, auth form labels, admin dialogs); kept in metadata title strings where correct
+- [x] API auth: `verifyAdminOrApiKey(request, orgSlug)` in `lib/auth.ts` — session-first, API-key fallback; wired to all write/admin routes (posts PATCH/DELETE, comments DELETE, changelog POST/PATCH/DELETE, roadmap POST/PATCH/DELETE, categories POST/DELETE)
+- [x] Widget: roadmap surface re-fetches on every open (removed stale `dataLoaded` flag) — shows live data after admin updates
 
 ## Prisma Client Note (pnpm monorepo)
 
