@@ -84,10 +84,17 @@ async function cmdInit(options: InitOptions) {
     document.documentElement.setAttribute("data-fb-theme", theme);
   }
 
-  // Create all 3 surfaces
-  handles.feedback = createFeedbackWidget(config, position, appUrl);
-  handles.changelog = createChangelogWidget(config, position, appUrl);
-  handles.roadmap = createRoadmapWidget(config, position, appUrl);
+  // Create all 3 surfaces — each gets a closeOthers callback so opening
+  // one surface automatically closes the other two
+  function closeOthers(except: "feedback" | "changelog" | "roadmap") {
+    if (except !== "feedback") handles.feedback?.close();
+    if (except !== "changelog") handles.changelog?.close();
+    if (except !== "roadmap") handles.roadmap?.close();
+  }
+
+  handles.feedback = createFeedbackWidget(config, position, appUrl, () => closeOthers("feedback"));
+  handles.changelog = createChangelogWidget(config, position, appUrl, () => closeOthers("changelog"));
+  handles.roadmap = createRoadmapWidget(config, position, appUrl, () => closeOthers("roadmap"));
 }
 
 async function cmdIdentify(options: IdentifyOptions) {

@@ -8,7 +8,8 @@ const CLOSE_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="1
 export function createRoadmapWidget(
   config: OrgConfig,
   position: "bottom-right" | "bottom-left",
-  appUrl: string
+  appUrl: string,
+  closeOthers: () => void = () => {}
 ) {
   const posClass = position === "bottom-left" ? "fb-left" : "fb-right";
   let isOpen = false;
@@ -32,6 +33,7 @@ export function createRoadmapWidget(
   document.body.appendChild(btn);
 
   function openPanel() {
+    closeOthers();
     isOpen = true;
     panel.classList.add("fb-open");
 
@@ -68,6 +70,16 @@ export function createRoadmapWidget(
   });
 
   panel.querySelector(".fb-close")?.addEventListener("click", closePanel);
+
+  document.addEventListener("click", (e) => {
+    if (isOpen && !panel.contains(e.target as Node) && !btn.contains(e.target as Node)) {
+      closePanel();
+    }
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && isOpen) closePanel();
+  });
 
   return {
     open: openPanel,

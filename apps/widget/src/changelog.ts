@@ -27,7 +27,8 @@ function countUnread(orgSlug: string, entries: ChangelogEntry[]): number {
 export function createChangelogWidget(
   config: OrgConfig,
   position: "bottom-right" | "bottom-left",
-  appUrl: string
+  appUrl: string,
+  closeOthers: () => void = () => {}
 ) {
   const posClass = position === "bottom-left" ? "fb-left" : "fb-right";
   let entries: ChangelogEntry[] = [];
@@ -50,6 +51,7 @@ export function createChangelogWidget(
   document.body.appendChild(btn);
 
   function openPopup() {
+    closeOthers();
     isOpen = true;
     popup.classList.add("fb-open");
     // Mark all as read when popup opens
@@ -126,11 +128,14 @@ export function createChangelogWidget(
 
   popup.querySelector(".fb-close")?.addEventListener("click", closePopup);
 
-  // Close on click outside
   document.addEventListener("click", (e) => {
     if (isOpen && !popup.contains(e.target as Node) && !btn.contains(e.target as Node)) {
       closePopup();
     }
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && isOpen) closePopup();
   });
 
   return {

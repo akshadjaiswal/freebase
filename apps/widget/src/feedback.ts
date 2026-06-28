@@ -15,7 +15,8 @@ interface FeedbackState {
 export function createFeedbackWidget(
   config: OrgConfig,
   position: "bottom-right" | "bottom-left",
-  appUrl: string
+  appUrl: string,
+  closeOthers: () => void = () => {}
 ) {
   const state: FeedbackState = { open: false, submitting: false, success: false };
   const posClass = position === "bottom-left" ? "fb-left" : "fb-right";
@@ -38,6 +39,7 @@ export function createFeedbackWidget(
   document.body.appendChild(btn);
 
   function openPanel() {
+    closeOthers();
     state.open = true;
     panel.classList.add("fb-open");
   }
@@ -134,6 +136,16 @@ export function createFeedbackWidget(
   });
 
   panel.querySelector(".fb-close")?.addEventListener("click", closePanel);
+
+  document.addEventListener("click", (e) => {
+    if (state.open && !panel.contains(e.target as Node) && !btn.contains(e.target as Node)) {
+      closePanel();
+    }
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && state.open) closePanel();
+  });
 
   attachFormHandlers();
 
