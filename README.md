@@ -161,10 +161,9 @@ function verify(rawBody, timestamp, signature, secret) {
 | `NEXT_PUBLIC_SUPABASE_URL` | ✅ | Supabase project URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | ✅ | Supabase anon key |
 | `SUPABASE_SERVICE_ROLE_KEY` | ✅ | Supabase service role key (server only) |
-| `UPSTASH_REDIS_REST_URL` | ✅ | Upstash Redis REST URL |
-| `UPSTASH_REDIS_REST_TOKEN` | ✅ | Upstash Redis REST token |
+| `UPSTASH_REDIS_REST_URL` | Optional | Upstash Redis REST URL (enables rate limiting) |
+| `UPSTASH_REDIS_REST_TOKEN` | Optional | Upstash Redis REST token (enables rate limiting) |
 | `NEXT_PUBLIC_APP_URL` | ✅ | Public URL of your deployment |
-| `FREEBASE_API_SECRET` | ✅ | 32-byte hex secret for internal signing |
 | `RESEND_API_KEY` | Optional | Enables changelog email subscriptions |
 | `EMAIL_FROM_DOMAIN` | Optional | Verified Resend domain for sending emails |
 | `NEXT_PUBLIC_WIDGET_DEMO_ORG` | Optional | Org slug to show live widget on marketing page |
@@ -178,7 +177,8 @@ function verify(rawBody, timestamp, signature, secret) {
 ```bash
 cp .env.example .env
 # Fill in: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY,
-#          UPSTASH_REDIS_REST_URL, UPSTASH_REDIS_REST_TOKEN, FREEBASE_API_SECRET
+#          NEXT_PUBLIC_APP_URL (your public domain)
+# Optional: UPSTASH_REDIS_REST_URL, UPSTASH_REDIS_REST_TOKEN (rate limiting)
 # DATABASE_URL and DATABASE_URL_UNPOOLED are set automatically by docker-compose
 
 docker compose up -d

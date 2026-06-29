@@ -5,6 +5,7 @@ import { randomBytes } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { errors, ok } from "@/lib/api";
 import { logger } from "@/lib/logger";
+import { getCreateOrgRateLimiter, getClientIp } from "@/lib/rate-limit";
 
 const schema = z.object({
   orgName: z.string().min(1).max(100),
@@ -18,6 +19,15 @@ const schema = z.object({
 });
 
 export async function POST(request: NextRequest) {
+  const limiter = getCreateOrgRateLimiter();
+  if (limiter) {
+    const ip = getClientIp(request);
+    const result = await limiter.limit(ip);
+    if (!result.success) {
+      return errors.rateLimited(Math.ceil((result.reset - Date.now()) / 1000));
+    }
+  }
+
   const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
@@ -78,6 +88,11 @@ export async function POST(request: NextRequest) {
           },
         },
       },
+    });
+
+    // Seed a default category so new orgs aren't completely empty
+    await prisma.category.create({
+      data: { orgId: org.id, name: "General", color: "#6366f1" },
     });
 
     return ok({ orgSlug: org.slug }, 201);

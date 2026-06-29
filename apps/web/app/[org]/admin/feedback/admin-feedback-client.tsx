@@ -1,6 +1,6 @@
 "use client";
 
-import { Tag } from "lucide-react";
+import { Tag, MessageSquarePlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
 
@@ -118,9 +118,37 @@ export function AdminFeedbackClient({ orgSlug, initialPosts, initialCategories }
         </div>
 
         {filteredPosts.length === 0 ? (
-          <div className="py-12 text-center text-sm text-[var(--text-muted)]">
-            No feedback posts here yet.
-          </div>
+          posts.length === 0 ? (
+            <div className="flex flex-col items-center gap-3 py-16 text-center">
+              <MessageSquarePlus className="h-8 w-8 text-[var(--text-muted)] opacity-40" />
+              <div>
+                <p className="text-sm font-medium text-[var(--text-secondary)]">No feedback yet</p>
+                <p className="mt-1 text-xs text-[var(--text-muted)]">
+                  Share your feedback URL or embed the widget to start collecting.
+                </p>
+              </div>
+              <div className="flex gap-2 mt-1">
+                <a
+                  href={`/${orgSlug}/feedback`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded px-3 py-1.5 text-xs font-medium border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+                >
+                  View feedback page
+                </a>
+                <a
+                  href={`/${orgSlug}/admin/settings`}
+                  className="rounded px-3 py-1.5 text-xs font-medium bg-[var(--accent-subtle)] text-[var(--accent)] hover:opacity-80 transition-opacity"
+                >
+                  Widget setup
+                </a>
+              </div>
+            </div>
+          ) : (
+            <div className="py-12 text-center text-sm text-[var(--text-muted)]">
+              No posts match this filter.
+            </div>
+          )
         ) : (
           <div className="divide-y divide-[var(--border-subtle)]">
             {filteredPosts.map((post) => (
