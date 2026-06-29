@@ -5,6 +5,16 @@ import { errors, ok } from "@/lib/api";
 import { verifyWidgetJwt } from "@/lib/jwt";
 import { getWidgetIdentifyLimiter, getClientIp } from "@/lib/rate-limit";
 
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, X-Freebase-User",
+};
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
+}
+
 const bodySchema = z.object({
   jwt: z.string().min(1),
 });
@@ -23,9 +33,7 @@ export async function POST(
     const ip = getClientIp(request);
     const result = await limiter.limit(ip);
     if (!result.success) {
-      return errors.rateLimited(
-        Math.ceil((result.reset - Date.now()) / 1000)
-      );
+      return errors.rateLimited(Math.ceil((result.reset - Date.now()) / 1000));
     }
   }
 
@@ -52,17 +60,18 @@ export async function POST(
     return errors.unauthorized("Invalid or expired JWT");
   }
 
-  // Validate orgSlug claim matches the route param
   if (payload.orgSlug !== orgSlug) {
     return errors.forbidden("JWT orgSlug does not match");
   }
 
-  // Return the verified identity — widget stores this and attaches to requests
-  // In v1 we simply echo back the verified JWT itself as the session token
-  return ok({
-    token: parsed.data.jwt,
-    userId: payload.userId,
-    email: payload.email,
-    name: payload.name ?? null,
-  });
+  return ok(
+    {
+      token: parsed.data.jwt,
+      userId: payload.userId,
+      email: payload.email,
+      name: payload.name ?? null,
+    },
+    200,
+    corsHeaders
+  );
 }

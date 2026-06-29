@@ -6,7 +6,8 @@ export function problemResponse(
   slug: string,
   title: string,
   detail: string,
-  extra?: Record<string, unknown>
+  extra?: Record<string, unknown>,
+  extraHeaders: Record<string, string> = {}
 ) {
   return NextResponse.json(
     {
@@ -22,6 +23,7 @@ export function problemResponse(
         "Content-Type": "application/problem+json",
         "X-Content-Type-Options": "nosniff",
         "X-Frame-Options": "DENY",
+        ...extraHeaders,
       },
     }
   );
@@ -67,12 +69,13 @@ export function decodeCursor(cursor: string): { id: string; createdAt: string } 
 }
 
 // Standard success response
-export function ok(data: unknown, status = 200) {
+export function ok(data: unknown, status = 200, extraHeaders: Record<string, string> = {}) {
   return NextResponse.json(data, {
     status,
     headers: {
       "X-Content-Type-Options": "nosniff",
       "X-Frame-Options": "DENY",
+      ...extraHeaders,
     },
   });
 }

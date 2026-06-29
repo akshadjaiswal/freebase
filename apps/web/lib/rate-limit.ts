@@ -62,6 +62,19 @@ export function getWidgetIdentifyLimiter() {
   return widgetIdentifyLimiter;
 }
 
+let subscribeRateLimiter: Ratelimit | null | undefined;
+let createOrgRateLimiter: Ratelimit | null | undefined;
+
+export function getSubscribeRateLimiter() {
+  if (subscribeRateLimiter === undefined) subscribeRateLimiter = createLimiter(10, "10 m");
+  return subscribeRateLimiter;
+}
+
+export function getCreateOrgRateLimiter() {
+  if (createOrgRateLimiter === undefined) createOrgRateLimiter = createLimiter(5, "1 h");
+  return createOrgRateLimiter;
+}
+
 export function getClientIp(request: Request): string {
   return (
     request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??

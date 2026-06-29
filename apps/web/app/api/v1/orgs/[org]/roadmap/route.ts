@@ -5,6 +5,16 @@ import { prisma } from "@/lib/prisma";
 import { errors, ok } from "@/lib/api";
 import { verifyAdminAccess, verifyAdminOrApiKey } from "@/lib/auth";
 
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Freebase-User",
+};
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
+}
+
 // GET /api/v1/orgs/[org]/roadmap — grouped by status
 // Public: returns only visible=true items
 // Admin (with Bearer token): returns all items including hidden
@@ -61,7 +71,7 @@ export async function GET(
     planned: items.filter((i) => i.status === "planned").map(format),
     inProgress: items.filter((i) => i.status === "in-progress").map(format),
     done: items.filter((i) => i.status === "done").map(format),
-  });
+  }, 200, corsHeaders);
 }
 
 const createSchema = z.object({

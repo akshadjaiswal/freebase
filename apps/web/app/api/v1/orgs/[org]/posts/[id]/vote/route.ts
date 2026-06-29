@@ -4,7 +4,17 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { errors, ok } from "@/lib/api";
 import { verifyWidgetJwt } from "@/lib/jwt";
-import { getClientIp } from "@/lib/rate-limit";
+import { getVoteLimiter, getClientIp } from "@/lib/rate-limit";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, DELETE, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, X-Freebase-User",
+};
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
+}
 
 function buildFingerprint(ip: string, ua: string, orgId: string): string {
   return createHash("sha256").update(`${ip}|${ua}|${orgId}`).digest("hex");
@@ -19,6 +29,15 @@ export async function POST(
   { params }: { params: Promise<{ org: string; id: string }> }
 ) {
   const { org: orgSlug, id: postId } = await params;
+
+  const limiter = getVoteLimiter();
+  if (limiter) {
+    const ip = getClientIp(request);
+    const result = await limiter.limit(ip);
+    if (!result.success) {
+      return errors.rateLimited(Math.ceil((result.reset - Date.now()) / 1000));
+    }
+  }
 
   const org = await prisma.organization.findUnique({
     where: { slug: orgSlug },
@@ -92,7 +111,7 @@ export async function POST(
     select: { voteCount: true },
   });
 
-  return ok({ votes: updated!.voteCount, voted: true }, 201);
+  return ok({ votes: updated!.voteCount, voted: true }, 201, corsHeaders);
 }
 
 export async function DELETE(
@@ -165,5 +184,5 @@ export async function DELETE(
     select: { voteCount: true },
   });
 
-  return ok({ votes: Math.max(0, updated!.voteCount), voted: false });
+  return ok({ votes: Math.max(0, updated!.voteCount), voted: false }, 200, corsHeaders);
 }

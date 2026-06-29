@@ -4,6 +4,17 @@ import { prisma } from "@/lib/prisma";
 import { errors, ok, encodeCursor, decodeCursor } from "@/lib/api";
 import { verifyAdminAccess } from "@/lib/auth";
 import { dispatchWebhook } from "@/lib/webhooks";
+import { getPostSubmitLimiter, getClientIp } from "@/lib/rate-limit";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, X-Freebase-User",
+};
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
+}
 
 export async function GET(
   request: NextRequest,
@@ -60,7 +71,7 @@ export async function GET(
       createdAt: c.createdAt,
     })),
     pagination: { hasMore, nextCursor, total },
-  });
+  }, 200, corsHeaders);
 }
 
 const createCommentSchema = z.object({
@@ -74,6 +85,15 @@ export async function POST(
   { params }: { params: Promise<{ org: string; id: string }> }
 ) {
   const { org: orgSlug, id: postId } = await params;
+
+  const limiter = getPostSubmitLimiter();
+  if (limiter) {
+    const ip = getClientIp(request);
+    const result = await limiter.limit(ip);
+    if (!result.success) {
+      return errors.rateLimited(Math.ceil((result.reset - Date.now()) / 1000));
+    }
+  }
 
   const org = await prisma.organization.findUnique({
     where: { slug: orgSlug },
@@ -124,5 +144,5 @@ export async function POST(
     data: { postId, comment: result },
   });
 
-  return ok(result, 201);
+  return ok(result, 201, corsHeaders);
 }

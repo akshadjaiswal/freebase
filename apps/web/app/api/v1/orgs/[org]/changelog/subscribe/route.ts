@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { errors, ok } from "@/lib/api";
 import { makeChangelogConfirmToken } from "@/lib/jwt";
 import { logger } from "@/lib/logger";
+import { getSubscribeRateLimiter, getClientIp } from "@/lib/rate-limit";
 
 function escapeHtml(s: string): string {
   return s
@@ -20,6 +21,15 @@ const subscribeSchema = z.object({
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ org: string }> }) {
   const { org: orgSlug } = await params;
+
+  const limiter = getSubscribeRateLimiter();
+  if (limiter) {
+    const ip = getClientIp(req);
+    const result = await limiter.limit(ip);
+    if (!result.success) {
+      return errors.rateLimited(Math.ceil((result.reset - Date.now()) / 1000));
+    }
+  }
 
   if (!process.env.EMAIL_FROM_DOMAIN) {
     return errors.unprocessable("Email subscriptions are not configured for this instance.");

@@ -5,6 +5,16 @@ import { prisma } from "@/lib/prisma";
 import { verifyAdminOrApiKey } from "@/lib/auth";
 import { errors, ok, encodeCursor, decodeCursor } from "@/lib/api";
 
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Freebase-User",
+};
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
+}
+
 function tiptapToText(body: unknown): string {
   if (!body || typeof body !== "object") return "";
   const doc = body as { content?: unknown[] };
@@ -107,7 +117,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ org:
       excerpt: tiptapToText(p.body).slice(0, 200),
     })),
     pagination: { hasMore, nextCursor, total },
-  });
+  }, 200, corsHeaders);
 }
 
 const createSchema = z.object({
