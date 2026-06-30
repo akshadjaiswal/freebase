@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { FieldInfo } from "@/components/ui/field-info";
 import {
   Dialog,
   DialogContent,
@@ -48,7 +49,10 @@ export function CreateWebhookDialog({
             />
           </div>
           <div>
-            <Label className="mb-1.5 block text-xs text-[var(--text-secondary)]">Signing secret</Label>
+            <Label className="mb-1.5 flex items-center gap-1.5 text-xs text-[var(--text-secondary)]">
+              Signing secret
+              <FieldInfo text="Your server verifies X-Freebase-Signature: sha256=HMAC(SHA256(secret), timestamp.body) to confirm the payload is from Freebase. Min 8 characters." />
+            </Label>
             <Input
               type="password"
               placeholder="Min 8 characters"
@@ -57,7 +61,10 @@ export function CreateWebhookDialog({
             />
           </div>
           <div>
-            <Label className="mb-1.5 block text-xs text-[var(--text-secondary)]">Events</Label>
+            <Label className="mb-1.5 flex items-center gap-1.5 text-xs text-[var(--text-secondary)]">
+              Events
+              <FieldInfo text="post.created: new feedback submitted. post.status_changed: admin updates status. comment.created: new comment. changelog.published: entry goes live." />
+            </Label>
             <div className="grid grid-cols-2 gap-1.5 mt-1">
               {ALL_EVENTS.map((event) => (
                 <label key={event} className="flex items-center gap-2 cursor-pointer">

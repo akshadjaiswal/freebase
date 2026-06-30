@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SectionHeader } from "@/components/ui/section-header";
+import { FieldInfo } from "@/components/ui/field-info";
 
 interface OrganizationSectionProps {
   org: { name: string; slug: string; accentColor: string };
@@ -36,7 +37,10 @@ export function OrganizationSection({ org, orgName, setOrgName, accentColor, set
           </Button>
         </div>
         <div className="p-4">
-          <Label className="mb-1.5 block text-xs text-[var(--text-secondary)]">Org slug (URL)</Label>
+          <Label className="mb-1.5 flex items-center gap-1.5 text-xs text-[var(--text-secondary)]">
+            Org slug (URL)
+            <FieldInfo text="Used in all your public URLs: /{slug}/feedback, /{slug}/changelog, /{slug}/roadmap. Cannot be changed after creation." />
+          </Label>
           <code className="block rounded-[var(--radius)] border border-[var(--border)] bg-[var(--background)] px-3 py-1.5 text-sm text-[var(--text-muted)] font-mono">
             {org.slug}
           </code>

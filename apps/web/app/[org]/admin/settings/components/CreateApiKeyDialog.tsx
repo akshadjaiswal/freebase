@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CopyButton } from "@/components/ui/copy-button";
+import { FieldInfo } from "@/components/ui/field-info";
 import {
   Dialog,
   DialogContent,
@@ -45,7 +46,10 @@ export function CreateApiKeyDialog({ open, onClose, newKeyName, setNewKeyName, c
         ) : (
           <div className="space-y-3">
             <div>
-              <Label className="mb-1.5 block text-xs text-[var(--text-secondary)]">Key name</Label>
+              <Label className="mb-1.5 flex items-center gap-1.5 text-xs text-[var(--text-secondary)]">
+                Key name
+                <FieldInfo text="A label so you can identify and rotate keys later. e.g. 'Production backend' or 'GitHub Actions'." />
+              </Label>
               <Input
                 placeholder="e.g. Production"
                 value={newKeyName}

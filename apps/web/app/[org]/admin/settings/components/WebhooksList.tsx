@@ -3,6 +3,7 @@
 import { Webhook, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { FieldInfo } from "@/components/ui/field-info";
 import type { WebhookItem, ConfirmAction } from "../hooks/types";
 
 interface WebhooksListProps {
@@ -19,6 +20,7 @@ export function WebhooksList({ webhooks, onNew, onDelete, onToggle }: WebhooksLi
         <div className="flex items-center gap-2">
           <Webhook className="h-4 w-4 text-[var(--text-muted)]" />
           <h2 className="text-sm font-semibold text-[var(--text-primary)]">Webhooks</h2>
+          <FieldInfo text="Freebase POSTs a signed JSON payload to your URL on each event. Verify the signature using X-Freebase-Signature: sha256=HMAC(key, timestamp.body)." />
         </div>
         <Button size="sm" variant="outline" className="gap-1.5" onClick={onNew}>
           <Plus className="h-3.5 w-3.5" /> Add webhook

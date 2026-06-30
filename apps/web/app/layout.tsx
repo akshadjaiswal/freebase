@@ -5,6 +5,7 @@ import { ThemeProvider } from "next-themes";
 import { Toaster } from "sonner";
 import NextTopLoader from "nextjs-toploader";
 import { WidgetDemo } from "@/components/widget-demo";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import "./globals.css";
 
 const DEMO_ORG = process.env.NEXT_PUBLIC_WIDGET_DEMO_ORG ?? "";
@@ -70,7 +71,9 @@ export default function RootLayout({
             shadow={false}
             showSpinner={false}
           />
-          {children}
+          <TooltipProvider delayDuration={300}>
+            {children}
+          </TooltipProvider>
           {DEMO_ORG && <WidgetDemo orgSlug={DEMO_ORG} />}
           <Toaster
             position="bottom-right"

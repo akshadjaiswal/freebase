@@ -7,6 +7,7 @@ import { ChevronLeft, Save, Globe, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { FieldInfo } from "@/components/ui/field-info";
 
 type Label = "feature" | "improvement" | "bug-fix" | "announcement";
 type Status = "draft" | "published";
@@ -181,6 +182,7 @@ export function ChangelogEditor({ orgSlug, initialData }: ChangelogEditorProps) 
             {/* Slug */}
             <div className="flex items-center gap-1.5">
               <span className="text-xs text-[var(--text-muted)]">Slug:</span>
+              <FieldInfo text="The URL path for this post: /{org}/changelog/{slug}. Auto-generated from title. Changing it after publishing breaks existing links." />
               <input
                 type="text"
                 value={slug}
@@ -193,6 +195,7 @@ export function ChangelogEditor({ orgSlug, initialData }: ChangelogEditorProps) 
             {/* Label */}
             <div className="flex items-center gap-1.5">
               <span className="text-xs text-[var(--text-muted)]">Label:</span>
+              <FieldInfo text="Categorizes the entry. Shown as a colored badge on the public changelog page." />
               <select
                 value={label}
                 onChange={(e) => setLabel(e.target.value as Label)}
@@ -205,6 +208,7 @@ export function ChangelogEditor({ orgSlug, initialData }: ChangelogEditorProps) 
             </div>
 
             {/* Status badge */}
+            <FieldInfo text="Publishing sends an email to all confirmed subscribers (if email is configured) and adds the entry to the RSS feed." />
             <span className={`inline-flex items-center rounded-[var(--radius-sm)] px-1.5 py-0.5 text-xs font-medium ${
               status === "published"
                 ? "bg-[var(--accent-subtle)] text-[var(--accent)]"

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { X, Search } from "lucide-react";
+import { FieldInfo } from "@/components/ui/field-info";
 import type { RoadmapItem } from "./roadmap-card";
 
 type Status = "planned" | "in-progress" | "done";
@@ -96,7 +97,12 @@ export function AddRoadmapItemModal({ orgSlug, feedbackPosts, onAdd, onClose }: 
                   : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
               }`}
             >
-              {m === "feedback" ? "From feedback" : "Standalone"}
+              {m === "feedback" ? (
+                <span className="inline-flex items-center gap-1">
+                  From feedback
+                  <FieldInfo text="Links the roadmap item to a feedback post. Vote count stays visible and status stays in sync." />
+                </span>
+              ) : "Standalone"}
             </button>
           ))}
         </div>
