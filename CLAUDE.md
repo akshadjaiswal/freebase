@@ -81,7 +81,8 @@ This file is the primary context for building Freebase. Read it at the start of 
 - `apps/web/lib/api.ts` — RFC 9457 error helpers, cursor pagination
 - `apps/web/lib/jwt.ts` — widget JWT verify, webhook HMAC
 - `apps/web/lib/rate-limit.ts` — Upstash rate limiter instances
-- `apps/web/components/ui/` — owned shadcn/ui components (includes `copy-button.tsx`, `section-header.tsx`)
+- `apps/web/components/ui/` — owned shadcn/ui components (includes `copy-button.tsx`, `section-header.tsx`, `field-info.tsx`)
+- `apps/web/app/docs/page.tsx` — public /docs page (Server Component, no auth); Widget Setup, API Keys, Webhooks, Changelog sections
 - `apps/web/components/feedback/category-chip.tsx` — shared category color chip (`${color}18` alpha pattern)
 - `apps/web/components/layout/sidebar.tsx` — admin sidebar
 - `apps/web/components/layout/topbar.tsx` — public pages topbar (Feedback/Changelog/Roadmap nav); accepts `accentColor` (injects CSS vars), `logoUrl`, `wide` props
@@ -306,10 +307,10 @@ At least one of the three unique constraints will always be set.
 
 ## Email Strategy (Phase 3)
 
-Changelog email subscriptions only work when `EMAIL_FROM_DOMAIN` env var is set.
-- Not set → hide "Subscribe" button entirely, show admin notice in settings
-- Set → full Resend integration, double opt-in, send on publish
-- Resend free: 3,000/month, 100/day, 1 domain
+Email subscription UI has been removed from the admin settings page and marketing page.
+The API routes, subscribe-button component, and confirm page still exist in the codebase but are not surfaced.
+- `EMAIL_FROM_DOMAIN` / `RESEND_API_KEY` env vars are still read by the API if set, but no UI exposes them
+- Do not re-add email subscription UI without explicit approval
 
 ---
 
@@ -409,7 +410,7 @@ All decisions are locked in `/research/`:
 - [x] UX: top navigation progress bar (nextjs-toploader), login redirect to org admin (two-layer: middleware + client useEffect), widget button stacking fixed, widget moved to root layout so it persists on admin page refresh
 - [x] UX: all native confirm()/window.confirm() replaced with Radix Dialog — settings (regen secret, delete API key, delete webhook), changelog editor (delete entry), roadmap admin (delete item)
 - [x] UX: changelog delete shows loading state on button and refreshes list via router.refresh() after deletion
-- [x] UX: roadmap drag-end setTimeout(0) hack removed — persist payload computed synchronously in setData closure
+- [x] UX: roadmap DnD fully rewritten — useDroppable on columns (empty columns droppable), dataRef pattern for sync persist read, arrayMove for within-column reorder, PATCH now reliably fires on every drag end
 - [x] UX: comment loading skeleton has min-h-[200px] to prevent CLS
 - [x] Code quality: CategoryChip component extracts `${color}18` hex-alpha pattern from 4 files; noUnusedLocals + noUnusedParameters enabled in tsconfig
 - [x] Tests: vitest@2 + 8 passing tests covering DELETE atomicity, Zod error shape, cursor pagination hasMore/nextCursor, comment POST validation
@@ -420,6 +421,11 @@ All decisions are locked in `/research/`:
 - [x] Copy: em dashes removed from all visible UI text (marketing bullets, footer, auth form labels, admin dialogs); kept in metadata title strings where correct
 - [x] API auth: `verifyAdminOrApiKey(request, orgSlug)` in `lib/auth.ts` — session-first, API-key fallback; wired to all write/admin routes (posts PATCH/DELETE, comments DELETE, changelog POST/PATCH/DELETE, roadmap POST/PATCH/DELETE, categories POST/DELETE)
 - [x] Widget: roadmap surface re-fetches on every open (removed stale `dataLoaded` flag) — shows live data after admin updates
+- [x] UX: TooltipProvider wired into root layout; FieldInfo component (Info icon + Radix tooltip, max 260px); contextual tooltips on Widget Secret Key, API Keys, Webhooks, org slug, changelog slug/label/status, roadmap "From feedback" tab
+- [x] Docs: `/docs` page added (public, no auth) — Widget Setup, API Keys, Webhooks, Changelog sections; SDK URL uses NEXT_PUBLIC_APP_URL
+- [x] Settings: Email Subscriptions section removed from admin settings UI (emailEnabled prop + Mail import cleaned up)
+- [x] Marketing: changelog bullet updated to remove email subscriptions mention; Docs link added to footer
+- [x] Sidebar: Help/Docs link (HelpCircle icon) above ⌘K bar
 
 ## Prisma Client Note (pnpm monorepo)
 

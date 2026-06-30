@@ -1,6 +1,6 @@
 # Freebase
 
-> Open source alternative to [Featurebase](https://featurebase.app) — MIT licensed, deployable to Vercel free tier or self-hosted with Docker.
+> Open source alternative to [Featurebase](https://featurebase.app) — MIT licensed, deployable to Vercel in one click.
 
 Collect feedback, publish changelogs, and showcase your roadmap. Drop one `<script>` tag to embed all three surfaces in your app.
 
@@ -11,7 +11,7 @@ Collect feedback, publish changelogs, and showcase your roadmap. Drop one `<scri
 | Feature | Description |
 |---|---|
 | **Feedback board** | Public voting board. Users submit ideas, upvote, comment. Admin manages statuses, categories, pin posts. |
-| **Changelog** | Rich text editor (Tiptap), draft/publish flow, email subscriptions (Resend), RSS feed. |
+| **Changelog** | Rich text editor (Tiptap), draft/publish flow, RSS feed. |
 | **Roadmap** | Three-column kanban: Planned → In Progress → Done. Admin drag-reorders, public read-only. |
 | **Embeddable widget** | Single `<script>` tag. Feedback form, changelog popup with unread badge, roadmap panel. <20KB gzip. |
 | **REST API** | Full REST API with API key auth. Use it to integrate with your own tools. |
@@ -28,7 +28,7 @@ All 6 phases complete — v1 ready.
 |---|---|
 | Monorepo scaffold, auth, admin shell | ✅ done |
 | Feedback board (public + admin + API) | ✅ done |
-| Changelog (Tiptap, RSS, email subscriptions) | ✅ done |
+| Changelog (Tiptap, RSS feed) | ✅ done |
 | Roadmap (kanban, drag-reorder, public view) | ✅ done |
 | Embeddable widget (Vite bundle, JWT identify) | ✅ done |
 | API keys, webhooks, settings, Docker | ✅ done |
@@ -73,7 +73,7 @@ Drop this in any HTML page:
   };
   window.Freebase('init', { org: 'your-org-slug' });
 </script>
-<script src="https://your-freebase-instance.com/cdn/v1/sdk.js" async></script>
+<script src="https://your-app-url.com/cdn/v1/sdk.js" async></script>
 ```
 
 Identify logged-in users (optional):
