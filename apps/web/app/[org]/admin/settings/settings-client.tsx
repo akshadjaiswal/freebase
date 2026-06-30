@@ -1,8 +1,5 @@
 "use client";
 
-import { Mail } from "lucide-react";
-import { SectionHeader } from "@/components/ui/section-header";
-
 import { useOrgSettings } from "./hooks/useOrgSettings";
 import { useSecretKey } from "./hooks/useSecretKey";
 import { useApiKeys } from "./hooks/useApiKeys";
@@ -24,10 +21,9 @@ interface Props {
   org: OrgSettings;
   apiKeys: ApiKeyItem[];
   webhooks: WebhookItem[];
-  emailEnabled: boolean;
 }
 
-export function SettingsClient({ org: initialOrg, apiKeys: initialKeys, webhooks: initialWebhooks, emailEnabled }: Props) {
+export function SettingsClient({ org: initialOrg, apiKeys: initialKeys, webhooks: initialWebhooks }: Props) {
   const orgSettings = useOrgSettings(initialOrg);
   const secretKey = useSecretKey(orgSettings.org.slug, orgSettings.setOrg);
   const apiKeys = useApiKeys(orgSettings.org.slug, initialKeys);
@@ -67,30 +63,6 @@ export function SettingsClient({ org: initialOrg, apiKeys: initialKeys, webhooks
         onDelete={confirmDialog.setConfirmAction}
         onToggle={webhooks.toggleWebhook}
       />
-
-      <section>
-        <SectionHeader icon={Mail} title="Email Subscriptions" />
-        <div className="rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] p-4 flex items-start gap-3">
-          <div className={`mt-0.5 h-2 w-2 rounded-full shrink-0 ${emailEnabled ? "bg-[var(--accent)]" : "bg-[var(--text-muted)]"}`} />
-          <div>
-            {emailEnabled ? (
-              <>
-                <p className="text-sm font-medium text-[var(--text-primary)]">Email enabled</p>
-                <p className="mt-0.5 text-xs text-[var(--text-secondary)]">
-                  Changelog subscriptions active. Emails send from your verified domain.
-                </p>
-              </>
-            ) : (
-              <>
-                <p className="text-sm font-medium text-[var(--text-primary)]">Email disabled</p>
-                <p className="mt-0.5 text-xs text-[var(--text-secondary)]">
-                  Set <code className="text-[var(--accent)]">RESEND_API_KEY</code> and <code className="text-[var(--accent)]">EMAIL_FROM_DOMAIN</code> to enable changelog email subscriptions.
-                </p>
-              </>
-            )}
-          </div>
-        </div>
-      </section>
 
       <DangerZoneSection
         orgSlug={orgSettings.org.slug}

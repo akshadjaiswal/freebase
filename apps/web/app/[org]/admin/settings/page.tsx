@@ -41,7 +41,6 @@ export default async function AdminSettingsPage({ params }: Props) {
           ...w,
           createdAt: new Date(w.createdAt).toISOString(),
         }))}
-        emailEnabled={!!(process.env.RESEND_API_KEY && process.env.EMAIL_FROM_DOMAIN)}
       />
     </div>
   );

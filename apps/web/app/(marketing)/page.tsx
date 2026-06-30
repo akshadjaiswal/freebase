@@ -48,7 +48,7 @@ const features = [
     headline: "Keep users in the loop",
     bullets: [
       "Rich text editor with draft/publish workflow",
-      "RSS feed and email subscriptions built in",
+      "RSS feed built in",
       "Users who requested a feature get notified when it ships",
     ],
     mockup: <ChangelogMockup />,
@@ -127,6 +127,12 @@ export default function HomePage() {
             >
               GitHub
             </a>
+            <Link
+              href="/docs"
+              className="text-xs text-[var(--text-muted)] transition-colors hover:text-[var(--text-primary)]"
+            >
+              Docs
+            </Link>
             <Link
               href="/new"
               className="text-xs text-[var(--text-muted)] transition-colors hover:text-[var(--text-primary)]"
