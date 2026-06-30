@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import {
   DndContext,
   DragOverlay,
   PointerSensor,
   useSensor,
   useSensors,
+  useDroppable,
   type DragStartEvent,
   type DragEndEvent,
   type DragOverEvent,
@@ -16,6 +17,7 @@ import {
   SortableContext,
   useSortable,
   verticalListSortingStrategy,
+  arrayMove,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Plus, GripVertical } from "lucide-react";
@@ -123,8 +125,9 @@ function AdminColumn({
   onToggleVisible: (id: string, visible: boolean) => void;
   onDelete: (id: string) => void;
 }) {
+  const { setNodeRef } = useDroppable({ id: colKey });
   return (
-    <div className="flex min-w-[280px] flex-1 flex-col" data-column={colKey}>
+    <div ref={setNodeRef} className="flex min-w-[280px] flex-1 flex-col" data-column={colKey}>
       <div className="mb-3 flex items-center gap-2">
         <h3 className="text-sm font-medium text-[var(--text-primary)]">
           {COLUMN_LABELS[status]}
@@ -165,11 +168,13 @@ export function AdminRoadmapClient({ orgSlug, initialData, feedbackPosts }: Prop
   const [activeItem, setActiveItem] = useState<RoadmapItem | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const dataRef = useRef(data);
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
   );
 
   useEffect(() => { setMounted(true); }, []);
+  useEffect(() => { dataRef.current = data; }, [data]);
 
   const findItem = useCallback(
     (id: string): { item: RoadmapItem; colKey: keyof RoadmapData } | null => {
@@ -195,47 +200,63 @@ export function AdminRoadmapClient({ orgSlug, initialData, feedbackPosts }: Prop
       const { active, over } = event;
       if (!over || active.id === over.id) return;
 
-      const activeFound = findItem(active.id as string);
-      if (!activeFound) return;
-
-      const overColKey = (Object.keys(data) as (keyof RoadmapData)[]).find(
-        (k) => k === over.id
-      );
-
-      if (overColKey) {
-        if (activeFound.colKey === overColKey) return;
-        setData((prev) => ({
-          ...prev,
-          [activeFound.colKey]: prev[activeFound.colKey].filter(
-            (i) => i.id !== active.id
-          ),
-          [overColKey]: [
-            ...prev[overColKey],
-            { ...activeFound.item, status: statusFromColumn(overColKey) },
-          ],
-        }));
-        return;
-      }
-
-      const overFound = findItem(over.id as string);
-      if (!overFound || activeFound.colKey === overFound.colKey) return;
-
       setData((prev) => {
-        const srcItems = prev[activeFound.colKey].filter((i) => i.id !== active.id);
-        const destItems = [...prev[overFound.colKey]];
+        // Find active item fresh from snapshot — avoids stale closure
+        let activeColKey: keyof RoadmapData | null = null;
+        let activeItemSnap: RoadmapItem | null = null;
+        for (const k of Object.keys(prev) as (keyof RoadmapData)[]) {
+          const found = prev[k].find((i) => i.id === active.id);
+          if (found) { activeColKey = k; activeItemSnap = found; break; }
+        }
+        if (!activeColKey || !activeItemSnap) return prev;
+
+        // Case 1: over.id is a column key (dropping on empty column area)
+        const overColKey = (Object.keys(prev) as (keyof RoadmapData)[]).find(
+          (k) => k === over.id
+        );
+        if (overColKey) {
+          if (activeColKey === overColKey) return prev;
+          return {
+            ...prev,
+            [activeColKey]: prev[activeColKey].filter((i) => i.id !== active.id),
+            [overColKey]: [
+              ...prev[overColKey],
+              { ...activeItemSnap, status: statusFromColumn(overColKey) },
+            ],
+          };
+        }
+
+        // Case 2: over.id is another item — find its column
+        let overColKey2: keyof RoadmapData | null = null;
+        for (const k of Object.keys(prev) as (keyof RoadmapData)[]) {
+          if (prev[k].some((i) => i.id === over.id)) { overColKey2 = k; break; }
+        }
+        if (!overColKey2) return prev;
+
+        if (activeColKey === overColKey2) {
+          // Within-column reorder
+          const fromIdx = prev[activeColKey].findIndex((i) => i.id === active.id);
+          const toIdx = prev[activeColKey].findIndex((i) => i.id === over.id);
+          if (fromIdx === -1 || toIdx === -1) return prev;
+          return { ...prev, [activeColKey]: arrayMove(prev[activeColKey], fromIdx, toIdx) };
+        }
+
+        // Cross-column: insert active before over item in target column
+        const srcItems = prev[activeColKey].filter((i) => i.id !== active.id);
+        const destItems = [...prev[overColKey2]];
         const overIndex = destItems.findIndex((i) => i.id === over.id);
         destItems.splice(overIndex, 0, {
-          ...activeFound.item,
-          status: statusFromColumn(overFound.colKey),
+          ...activeItemSnap,
+          status: statusFromColumn(overColKey2),
         });
         return {
           ...prev,
-          [activeFound.colKey]: srcItems,
-          [overFound.colKey]: destItems,
+          [activeColKey]: srcItems,
+          [overColKey2]: destItems,
         };
       });
     },
-    [data, findItem]
+    [] // reads everything fresh from prev snapshot — no stale closure risk
   );
 
   const handleDragEnd = useCallback(
@@ -245,30 +266,39 @@ export function AdminRoadmapClient({ orgSlug, initialData, feedbackPosts }: Prop
       if (!over) return;
 
       const activeId = active.id as string;
-      let persist: { id: string; status: Status; position: number } | null = null;
 
+      // Read synchronously from ref — dataRef.current is always the latest state
+      // (updated by useEffect after every setData in handleDragOver)
+      const snapshot = dataRef.current;
+      let targetColKey: keyof RoadmapData | null = null;
+      let targetIdx = -1;
+      for (const k of Object.keys(snapshot) as (keyof RoadmapData)[]) {
+        const idx = snapshot[k].findIndex((i) => i.id === activeId);
+        if (idx !== -1) { targetColKey = k; targetIdx = idx; break; }
+      }
+      if (!targetColKey || targetIdx === -1) return;
+
+      const status = statusFromColumn(targetColKey);
+      const position = targetIdx;
+
+      // Normalize all positions in state (purely visual — no PATCH needed per item)
       setData((prev) => {
         const newData: RoadmapData = { planned: [], inProgress: [], done: [] };
-        for (const colKey of Object.keys(prev) as (keyof RoadmapData)[]) {
-          newData[colKey] = prev[colKey].map((item, idx) => ({ ...item, position: idx }));
-          const idx = newData[colKey].findIndex((i) => i.id === activeId);
-          if (idx !== -1) {
-            persist = { id: activeId, status: statusFromColumn(colKey), position: idx };
-          }
+        for (const k of Object.keys(prev) as (keyof RoadmapData)[]) {
+          newData[k] = prev[k].map((item, idx) => ({ ...item, position: idx }));
         }
         return newData;
       });
 
-      if (!persist) return;
-      const { id, status, position } = persist as { id: string; status: Status; position: number };
+      // PATCH fires here — after synchronous ref read, not inside a setState updater
       try {
-        await fetch(`/api/v1/orgs/${orgSlug}/roadmap/${id}`, {
+        await fetch(`/api/v1/orgs/${orgSlug}/roadmap/${activeId}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ status, position }),
         });
       } catch {
-        // silently fail — UI already updated
+        // silently fail — UI already updated optimistically
       }
     },
     [orgSlug]
@@ -333,7 +363,7 @@ export function AdminRoadmapClient({ orgSlug, initialData, feedbackPosts }: Prop
         <div>
           <h1 className="text-xl font-semibold text-[var(--text-primary)]">Roadmap</h1>
           <p className="mt-1 text-sm text-[var(--text-secondary)]">
-            Drag cards between columns to update status.
+            Drag cards between columns to update status. Or promote feedback posts via Add item.
           </p>
         </div>
         <button
