@@ -9,6 +9,7 @@ import {
   Settings,
   LogOut,
   Loader2,
+  HelpCircle,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -96,6 +97,17 @@ export function Sidebar({ orgSlug, orgName, userEmail }: SidebarProps) {
           Settings
         </Link>
       </nav>
+
+      {/* Help / Docs link */}
+      <div className="px-2 pb-1">
+        <Link
+          href="/docs"
+          className="flex items-center gap-2.5 rounded-[var(--radius)] px-2.5 py-1.5 text-sm text-[var(--text-secondary)] hover:bg-[var(--surface-raised)] hover:text-[var(--text-primary)] transition-colors"
+        >
+          <HelpCircle className="h-4 w-4 shrink-0" />
+          Docs
+        </Link>
+      </div>
 
       {/* ⌘K hint */}
       <div className="px-3 pb-1">
