@@ -20,19 +20,6 @@ Collect feedback, publish changelogs, and showcase your roadmap. Drop one `<scri
 
 ---
 
-## Status
-
-All 6 phases complete — v1 ready.
-
-| Phase | Status |
-|---|---|
-| Monorepo scaffold, auth, admin shell | ✅ done |
-| Feedback board (public + admin + API) | ✅ done |
-| Changelog (Tiptap, RSS feed) | ✅ done |
-| Roadmap (kanban, drag-reorder, public view) | ✅ done |
-| Embeddable widget (Vite bundle, JWT identify) | ✅ done |
-| API keys, webhooks, settings, Docker | ✅ done |
-
 ---
 
 ## Quick start (Vercel deploy)
@@ -121,7 +108,7 @@ curl -X POST -H "Authorization: Bearer fb_live_xxx" \
   https://your-instance.com/api/v1/orgs/your-org/posts
 ```
 
-Full API reference in [research/API_SPEC.md](research/API_SPEC.md) (gitignored — see repo root).
+Full API reference: see `/docs` in your deployed instance or `research/API_SPEC.md` locally.
 
 ---
 
@@ -164,8 +151,8 @@ function verify(rawBody, timestamp, signature, secret) {
 | `UPSTASH_REDIS_REST_URL` | Optional | Upstash Redis REST URL (enables rate limiting) |
 | `UPSTASH_REDIS_REST_TOKEN` | Optional | Upstash Redis REST token (enables rate limiting) |
 | `NEXT_PUBLIC_APP_URL` | ✅ | Public URL of your deployment |
-| `RESEND_API_KEY` | Optional | Enables changelog email subscriptions |
-| `EMAIL_FROM_DOMAIN` | Optional | Verified Resend domain for sending emails |
+| `RESEND_API_KEY` | Optional | Resend API key (reserved for future email features) |
+| `EMAIL_FROM_DOMAIN` | Optional | Verified Resend domain |
 | `NEXT_PUBLIC_WIDGET_DEMO_ORG` | Optional | Org slug to show live widget on marketing page |
 
 ---
@@ -212,6 +199,8 @@ To use an external database (e.g. Neon) instead of the bundled Postgres, remove 
 ## Contributing
 
 Issues and PRs welcome. For significant changes, open a discussion first.
+
+See [SETUP.md](SETUP.md) for local dev setup.
 
 ---
 
