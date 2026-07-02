@@ -69,12 +69,6 @@ RESEND_API_KEY=""           # leave blank to disable email
 EMAIL_FROM_DOMAIN=""        # leave blank to disable email
 
 NEXT_PUBLIC_APP_URL="http://localhost:3000"
-FREEBASE_API_SECRET="generate-with-openssl-rand-hex-32"
-```
-
-Generate the API secret:
-```bash
-openssl rand -hex 32
 ```
 
 ---
@@ -284,13 +278,12 @@ gzip -c apps/web/public/cdn/v1/sdk.js | wc -c  # must be < 20480
 
 **Settings page (`/[org]/admin/settings`):**
 
-1. Navigate to `/[org]/admin/settings` — page loads with sections: Organization, Widget Secret Key, API Keys, Webhooks, Email, Danger Zone
+1. Navigate to `/[org]/admin/settings` — page loads with sections: Organization, Widget Secret Key, API Keys, Webhooks, Danger Zone
 2. Edit org name → click Save → name updates immediately
 3. Change accent color (color picker) → Save → color updates
 4. Widget Secret Key section → click eye icon → key revealed → copy button works
 5. Click "Regenerate secret" → confirm dialog → key regenerated (old widget JWTs invalidated)
-6. Email section shows green dot if `RESEND_API_KEY` + `EMAIL_FROM_DOMAIN` set, grey dot otherwise
-7. Danger zone: type org slug in input → Delete button activates → click → org deleted → redirect to `/`
+6. Danger zone: type org slug in input → Delete button activates → click → org deleted → redirect to `/`
 
 **API Keys:**
 
@@ -344,9 +337,22 @@ pnpm db:push          # push schema without migration (dev only, use with care)
 
 ---
 
-## Self-Host with Docker (Phase 6)
+## Self-Host with Docker
 
-Docker Compose setup will be added in Phase 6. Will support single `docker compose up -d` deployment with Postgres included.
+```bash
+cp .env.example .env
+# Fill in: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY
+# NEXT_PUBLIC_APP_URL (your public domain, e.g. http://localhost:3000 for local)
+# Optional: UPSTASH_REDIS_REST_URL, UPSTASH_REDIS_REST_TOKEN
+# DATABASE_URL and DATABASE_URL_UNPOOLED are set automatically by docker-compose
+
+docker compose up -d
+
+# Run migrations (first time only)
+docker compose exec web sh -c "DATABASE_URL=\$DATABASE_URL_UNPOOLED npx prisma migrate deploy"
+```
+
+App runs at `http://localhost:3000`. Postgres is bundled — no Neon needed for local Docker.
 
 ---
 

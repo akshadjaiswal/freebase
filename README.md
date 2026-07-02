@@ -20,9 +20,7 @@ Collect feedback, publish changelogs, and showcase your roadmap. Drop one `<scri
 
 ---
 
----
-
-## Quick start (Vercel deploy)
+## Quick start (deploy your own)
 
 1. Fork this repo
 2. Create accounts on [Neon](https://neon.tech), [Supabase](https://supabase.com), [Upstash](https://upstash.com)
@@ -45,7 +43,7 @@ docker compose up -d
 
 App runs at `http://localhost:3000`. Postgres is included in the compose setup.
 
-See [Self-host with Docker](#self-host-with-docker-1) below for full details.
+See [Self-host with Docker](#self-host-with-docker) below for full details.
 
 ---
 

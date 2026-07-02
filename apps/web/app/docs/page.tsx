@@ -46,7 +46,7 @@ function P({ children }: { children: React.ReactNode }) {
 }
 
 export default function DocsPage() {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://freebase.app";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL!;
   return (
     <div className="min-h-screen bg-[var(--background)]">
       {/* Top nav */}

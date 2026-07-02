@@ -64,7 +64,7 @@ This file is the primary context for building Freebase. Read it at the start of 
 ## Key Files
 
 ### Packages
-- `packages/db/prisma/schema.prisma` — full Prisma schema (11 models)
+- `packages/db/prisma/schema.prisma` — full Prisma schema (12 models)
 
 ### Apps/web
 - `apps/web/app/globals.css` — all CSS custom properties (design tokens)
@@ -394,8 +394,8 @@ All decisions are locked in `/research/`:
 
 ## Known Issues / TODOs
 
-- [ ] Rate limiting gracefully skipped if Upstash not configured (returns null limiter)
-- [ ] Delete org Supabase user cleanup uses dynamic import of `@supabase/supabase-js` admin client — works but not tree-shaken; acceptable for a rare operation
+- [x] Rate limiting gracefully skipped if Upstash not configured (returns null limiter) — by design, intentional dev-friendly behavior
+- [x] Delete org Supabase user cleanup uses dynamic import of `@supabase/supabase-js` admin client — works but not tree-shaken; acceptable for a rare operation
 - [x] All 6 product phases complete — v1 ready
 - [x] Production hardening (7 phases): data integrity, env validation, API consistency, god component splits, UX polish, a11y, test infrastructure
 - [x] Security: 8 vulns fixed (draft changelog exposure, vote dedup bypass, SSRF, email leakage, webhook secret hashing, HTML injection, token expiry, orgSlug naming)
@@ -426,6 +426,7 @@ All decisions are locked in `/research/`:
 - [x] Settings: Email Subscriptions section removed from admin settings UI (emailEnabled prop + Mail import cleaned up)
 - [x] Marketing: changelog bullet updated to remove email subscriptions mention; Docs link added to footer
 - [x] Sidebar: Help/Docs link (HelpCircle icon) above ⌘K bar
+- [x] Pre-deployment security fixes: vote DELETE rate limiting, comment DELETE revalidateTag cache invalidation, roadmap GET auth fixed to use verifyAdminOrApiKey (API keys now work), NEXT_PUBLIC_APP_URL required (no localhost default — fails fast on misconfigured deploy)
 
 ## Prisma Client Note (pnpm monorepo)
 
