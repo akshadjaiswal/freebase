@@ -1,6 +1,6 @@
 # Freebase
 
-> Open source alternative to [Featurebase](https://featurebase.app) — MIT licensed, deployable to Vercel in one click.
+> Open source alternative to [Featurebase](https://featurebase.app) : feedback boards, changelog, roadmap & embeddable widget.
 
 Collect feedback, publish changelogs, and showcase your roadmap. Drop one `<script>` tag to embed all three surfaces in your app.
 
