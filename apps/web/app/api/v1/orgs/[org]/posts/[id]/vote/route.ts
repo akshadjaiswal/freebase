@@ -120,6 +120,15 @@ export async function DELETE(
 ) {
   const { org: orgSlug, id: postId } = await params;
 
+  const limiter = getVoteLimiter();
+  if (limiter) {
+    const ip = getClientIp(request);
+    const result = await limiter.limit(ip);
+    if (!result.success) {
+      return errors.rateLimited(Math.ceil((result.reset - Date.now()) / 1000));
+    }
+  }
+
   const org = await prisma.organization.findUnique({
     where: { slug: orgSlug },
     select: { id: true, secretKey: true },

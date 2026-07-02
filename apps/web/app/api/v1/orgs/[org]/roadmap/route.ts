@@ -3,7 +3,7 @@ import { z } from "zod";
 import { revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { errors, ok } from "@/lib/api";
-import { verifyAdminAccess, verifyAdminOrApiKey } from "@/lib/auth";
+import { verifyAdminOrApiKey } from "@/lib/auth";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -30,16 +30,12 @@ export async function GET(
   });
   if (!org) return errors.notFound("Organization not found");
 
-  // Check if admin viewing (Bearer token in header)
-  const authHeader = request.headers.get("authorization");
+  // Check if admin viewing (session or API key)
   let isAdmin = false;
-  if (authHeader?.startsWith("Bearer ")) {
-    try {
-      await verifyAdminAccess(orgSlug);
-      isAdmin = true;
-    } catch {
-      // not admin — public view
-    }
+  const authHeader = request.headers.get("authorization");
+  if (authHeader) {
+    const admin = await verifyAdminOrApiKey(request, orgSlug).catch(() => null);
+    if (admin) isAdmin = true;
   }
 
   const where = isAdmin

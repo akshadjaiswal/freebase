@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { errors } from "@/lib/api";
 import { verifyAdminOrApiKey } from "@/lib/auth";
@@ -22,6 +23,8 @@ export async function DELETE(
   if (!comment) return errors.notFound("Comment not found.");
 
   await prisma.feedbackComment.delete({ where: { id: commentId } });
+
+  revalidateTag(`feedback-${admin.orgId}`);
 
   return new Response(null, { status: 204 });
 }
