@@ -434,6 +434,8 @@ Schema sets `output = "../../../node_modules/.prisma/client"` so Turbopack can f
 After any schema change, run: `pnpm --filter db generate`
 The generated client lands at repo root `node_modules/.prisma/client/`.
 
+**Import path:** Always import from `@prisma/client`, NOT `.prisma/client`. The `.prisma/client` path is an internal generated directory — importing it directly fails on Vercel. `@prisma/client` re-exports all types and is the correct public API.
+
 ## Tailwind CSS v4 + Turbopack Note
 
 Tailwind v4 requires `@tailwindcss/postcss` plugin — it does NOT auto-integrate with Next.js/Turbopack.
