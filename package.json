@@ -2,14 +2,15 @@
   "name": "freebase",
   "private": true,
   "scripts": {
+    "postinstall": "pnpm --filter @freebase/db generate",
     "dev": "turbo run dev",
     "build": "turbo run build",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
-    "db:generate": "pnpm --filter db prisma generate",
-    "db:migrate": "pnpm --filter db migrate",
-    "db:studio": "pnpm --filter db prisma studio",
-    "db:push": "pnpm --filter db prisma db push"
+    "db:generate": "pnpm --filter @freebase/db generate",
+    "db:migrate": "pnpm --filter @freebase/db migrate",
+    "db:studio": "pnpm --filter @freebase/db studio",
+    "db:push": "pnpm --filter @freebase/db push"
   },
   "devDependencies": {
     "turbo": "^2.3.3",
