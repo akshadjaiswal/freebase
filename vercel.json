@@ -1,0 +1,4 @@
+{
+  "buildCommand": "pnpm --filter @freebase/db generate && turbo run build",
+  "installCommand": "pnpm install"
+}
