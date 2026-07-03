@@ -37,7 +37,8 @@ export default async function ChangelogPage({ params }: Props) {
   for (const post of posts) {
     const d = new Date(post.publishedAt ?? post.createdAt);
     const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-    const label = new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric" }).format(d);
+    const MONTHS_LONG = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+    const label = `${MONTHS_LONG[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
     const existing = groups.find((g) => g.key === key);
     if (existing) {
       existing.posts.push(post);

@@ -75,8 +75,9 @@ export default async function ChangelogPostPage({ params }: Props) {
     CodeBlock.configure({ HTMLAttributes: { class: "tiptap-code-block" } }),
   ]);
 
+  const MONTHS_LONG = ["January","February","March","April","May","June","July","August","September","October","November","December"];
   const date = post.publishedAt
-    ? new Intl.DateTimeFormat("en-US", { month: "long", day: "numeric", year: "numeric" }).format(post.publishedAt)
+    ? `${MONTHS_LONG[new Date(post.publishedAt).getUTCMonth()]} ${new Date(post.publishedAt).getUTCDate()}, ${new Date(post.publishedAt).getUTCFullYear()}`
     : "";
 
   return (
