@@ -4,7 +4,7 @@ import { verifyAdminAccess } from "@/lib/auth";
 import { getChangelogPageData } from "@/lib/data";
 import { LabelBadge } from "@/components/changelog/changelog-entry";
 import { Plus, FileText } from "lucide-react";
-import type { ChangelogPost } from ".prisma/client";
+import type { ChangelogPost } from "@prisma/client";
 
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
