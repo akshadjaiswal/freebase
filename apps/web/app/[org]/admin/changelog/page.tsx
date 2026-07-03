@@ -4,6 +4,9 @@ import { verifyAdminAccess } from "@/lib/auth";
 import { getChangelogPageData } from "@/lib/data";
 import { LabelBadge } from "@/components/changelog/changelog-entry";
 import { Plus, FileText } from "lucide-react";
+import type { ChangelogPost } from "@prisma/client";
+
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
 interface Props {
   params: Promise<{ org: string }>;
@@ -61,9 +64,8 @@ export default async function AdminChangelogPage({ params }: Props) {
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--border)] bg-[var(--surface)]">
-              {posts.map((post) => {
+              {posts.map((post: ChangelogPost) => {
                 const d = new Date(post.publishedAt ?? post.createdAt);
-                const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
                 const date = `${MONTHS[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}`;
                 return (
                   <tr key={post.id} className="hover:bg-[var(--surface-raised)] transition-colors">
