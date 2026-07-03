@@ -62,11 +62,9 @@ export default async function AdminChangelogPage({ params }: Props) {
             </thead>
             <tbody className="divide-y divide-[var(--border)] bg-[var(--surface)]">
               {posts.map((post) => {
-                const date = new Date(post.publishedAt ?? post.createdAt).toLocaleDateString("en-US", {
-                  month: "short",
-                  day: "numeric",
-                  year: "numeric",
-                });
+                const d = new Date(post.publishedAt ?? post.createdAt);
+                const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+                const date = `${MONTHS[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}`;
                 return (
                   <tr key={post.id} className="hover:bg-[var(--surface-raised)] transition-colors">
                     <td className="px-4 py-3 font-medium text-[var(--text-primary)]">{post.title}</td>
