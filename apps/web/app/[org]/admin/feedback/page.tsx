@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { verifyAdminAccess } from "@/lib/auth";
-import { getFeedbackPageData } from "@/lib/data";
+import { getFeedbackPageData, type FeedbackPostRow, type CategoryRow } from "@/lib/data";
 import { AdminFeedbackClient } from "./admin-feedback-client";
 
 interface Props {
@@ -18,7 +18,7 @@ export default async function AdminFeedbackPage({ params }: Props) {
   return (
     <AdminFeedbackClient
       orgSlug={orgSlug}
-      initialPosts={posts.map((p) => ({
+      initialPosts={posts.map((p: FeedbackPostRow) => ({
         id: p.id,
         title: p.title,
         description: p.description,
@@ -31,7 +31,7 @@ export default async function AdminFeedbackPage({ params }: Props) {
         createdAt: new Date(p.createdAt).toISOString(),
         updatedAt: new Date(p.updatedAt).toISOString(),
       }))}
-      initialCategories={categories.map((c) => ({
+      initialCategories={categories.map((c: CategoryRow) => ({
         id: c.id,
         name: c.name,
         color: c.color,

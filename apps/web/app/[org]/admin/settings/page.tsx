@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { verifyAdminAccess } from "@/lib/auth";
-import { getSettingsPageData } from "@/lib/data";
+import { getSettingsPageData, type ApiKeyRow, type WebhookRow } from "@/lib/data";
 import { SettingsClient } from "./settings-client";
 
 interface Props {
@@ -32,12 +32,12 @@ export default async function AdminSettingsPage({ params }: Props) {
           accentColor: session.org.accentColor,
           secretKey: session.org.secretKey,
         }}
-        apiKeys={apiKeys.map((k) => ({
+        apiKeys={apiKeys.map((k: ApiKeyRow) => ({
           ...k,
           lastUsedAt: k.lastUsedAt ? new Date(k.lastUsedAt).toISOString() : null,
           createdAt: new Date(k.createdAt).toISOString(),
         }))}
-        webhooks={webhooks.map((w) => ({
+        webhooks={webhooks.map((w: WebhookRow) => ({
           ...w,
           createdAt: new Date(w.createdAt).toISOString(),
         }))}
