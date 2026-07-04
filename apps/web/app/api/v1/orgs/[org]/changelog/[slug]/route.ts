@@ -115,7 +115,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
         const { Resend } = await import("resend");
         const resend = new Resend(process.env.RESEND_API_KEY);
         await Promise.allSettled(
-          subscribers.map((sub) =>
+          subscribers.map((sub: (typeof subscribers)[0]) =>
             resend.emails.send({
               from: `${orgName} <noreply@${process.env.EMAIL_FROM_DOMAIN}>`,
               to: sub.email,

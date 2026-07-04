@@ -23,7 +23,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ org
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://freebase.app";
   const baseUrl = `${appUrl}/${orgSlug}`;
 
-  const items = posts.map((post) => {
+  const items = posts.map((post: (typeof posts)[0]) => {
     const html = generateHTML(post.body as Parameters<typeof generateHTML>[0], [
       StarterKit.configure({ codeBlock: false, heading: { levels: [2, 3] } }),
       Link.configure({ openOnClick: false }),

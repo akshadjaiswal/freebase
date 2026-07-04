@@ -105,7 +105,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ org:
     : null;
 
   return ok({
-    data: items.map((p) => ({
+    data: items.map((p: (typeof items)[0]) => ({
       id: p.id,
       title: p.title,
       slug: p.slug,

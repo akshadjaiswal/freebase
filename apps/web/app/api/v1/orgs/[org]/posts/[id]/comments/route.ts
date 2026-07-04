@@ -64,7 +64,7 @@ export async function GET(
     : null;
 
   return ok({
-    data: page.map((c) => ({
+    data: page.map((c: (typeof page)[0]) => ({
       id: c.id,
       body: c.body,
       author: isAdmin ? { email: c.authorEmail, name: c.authorName } : { name: c.authorName ?? null },
