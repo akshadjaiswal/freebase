@@ -24,16 +24,20 @@ export const getFeedbackPageData = (orgId: string) =>
     { tags: [`org-${orgId}`, `feedback-${orgId}`], revalidate: 60 }
   )();
 
+const changelogFindMany = (orgId: string) =>
+  prisma.changelogPost.findMany({
+    where: { orgId },
+    orderBy: [{ createdAt: "desc" }],
+  });
+
+export type ChangelogPostRow = Awaited<ReturnType<typeof changelogFindMany>>[number];
+
 export const getChangelogPageData = (orgId: string) =>
   unstable_cache(
-    async () =>
-      prisma.changelogPost.findMany({
-        where: { orgId },
-        orderBy: [{ createdAt: "desc" }],
-      }),
+    () => changelogFindMany(orgId),
     [`changelog-${orgId}`],
     { tags: [`org-${orgId}`, `changelog-${orgId}`], revalidate: 60 }
-  )();
+  )() as Promise<ChangelogPostRow[]>;
 
 export const getRoadmapPageData = (orgId: string) =>
   unstable_cache(

@@ -4,7 +4,7 @@ import { verifyAdminAccess } from "@/lib/auth";
 import { getChangelogPageData } from "@/lib/data";
 import { LabelBadge } from "@/components/changelog/changelog-entry";
 import { Plus, FileText } from "lucide-react";
-import type { ChangelogPost } from "@prisma/client";
+import type { ChangelogPostRow } from "@/lib/data";
 
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
@@ -64,7 +64,7 @@ export default async function AdminChangelogPage({ params }: Props) {
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--border)] bg-[var(--surface)]">
-              {posts.map((post: ChangelogPost) => {
+              {posts.map((post: ChangelogPostRow) => {
                 const d = new Date(post.publishedAt ?? post.createdAt);
                 const date = `${MONTHS[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}`;
                 return (

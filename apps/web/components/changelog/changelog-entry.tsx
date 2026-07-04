@@ -1,5 +1,4 @@
 import Link from "next/link";
-import type { ChangelogPost } from "@prisma/client";
 
 const LABEL_STYLES: Record<string, string> = {
   feature: "bg-[var(--accent-subtle)] text-[var(--accent)]",
@@ -34,7 +33,7 @@ function tiptapToText(body: unknown): string {
 }
 
 interface ChangelogEntryProps {
-  post: Pick<ChangelogPost, "id" | "title" | "slug" | "label" | "publishedAt" | "body">;
+  post: { id: string; title: string; slug: string; label: string; publishedAt: Date | null; body: unknown };
   orgSlug: string;
 }
 
