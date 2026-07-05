@@ -2,6 +2,8 @@
 
 This file is the primary context for building Freebase. Read it at the start of every session. Update it after every phase completes.
 
+**Production URL:** https://freebase.vercel.app (main branch auto-deploys to Vercel)
+
 ## Phase Status
 
 - [x] Phase 1 — Monorepo scaffold, Prisma schema, auth, admin shell, marketing page
