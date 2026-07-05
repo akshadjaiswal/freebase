@@ -261,6 +261,13 @@ Push schema without migration (dev only):
 pnpm db:push
 ```
 
+Seed demo data for `freebase` org (idempotent — safe to re-run):
+```bash
+DATABASE_URL=$DATABASE_URL DATABASE_URL_UNPOOLED=$DATABASE_URL_UNPOOLED pnpm --filter @freebase/db seed
+```
+
+Seed script: `packages/db/prisma/seed.ts` — creates 4 categories, 8 feedback posts, 3 changelog entries, 6 roadmap items.
+
 ---
 
 ## Auth Notes
