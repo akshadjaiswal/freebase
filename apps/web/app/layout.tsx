@@ -28,21 +28,21 @@ const calSans = localFont({
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "https://freebase.app"),
   title: {
-    default: "Freebase — The Free Product Feedback Platform",
+    default: "Freebase | The Free Product Feedback Platform",
     template: "%s | Freebase",
   },
   description:
-    "Collect feedback, publish changelogs, and showcase your roadmap — all in one place. Free forever. Open source, MIT licensed.",
+    "Collect feedback, publish changelogs, and showcase your roadmap. All in one place. Free forever. Open source, MIT licensed.",
   openGraph: {
     type: "website",
     siteName: "Freebase",
-    title: "Freebase — The Free Product Feedback Platform",
+    title: "Freebase | The Free Product Feedback Platform",
     description: "Collect feedback, publish changelogs, and showcase your roadmap. Free forever.",
     images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: "Freebase" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Freebase — The Free Product Feedback Platform",
+    title: "Freebase | The Free Product Feedback Platform",
     description: "Collect feedback, publish changelogs, and showcase your roadmap. Free forever.",
     images: ["/opengraph-image"],
   },

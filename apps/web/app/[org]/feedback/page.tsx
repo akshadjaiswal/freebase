@@ -19,7 +19,7 @@ export async function generateMetadata({ params }: Props) {
   const { org: orgSlug } = await params;
   const org = await getOrgBySlug(orgSlug);
   if (!org) return {};
-  const title = `${org.name} — Feedback`;
+  const title = `${org.name} | Feedback`;
   const description = `Submit ideas, vote on features, and track what ${org.name} is building.`;
   return {
     title,

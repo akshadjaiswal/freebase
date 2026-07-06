@@ -40,7 +40,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   });
   if (!post) return {};
   const excerpt = tiptapToText(post.body).slice(0, 160) || undefined;
-  const title = `${post.title} — ${org.name}`;
+  const title = `${post.title} | ${org.name}`;
   return {
     title,
     description: excerpt,

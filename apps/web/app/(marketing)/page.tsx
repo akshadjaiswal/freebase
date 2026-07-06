@@ -16,17 +16,17 @@ import Link from "next/link";
 import { Logo } from "@/components/ui/logo";
 
 export const metadata: Metadata = {
-  title: "Freebase — The Free Product Feedback Platform",
+  title: "Freebase | The Free Product Feedback Platform",
   description:
-    "Collect feedback, publish changelogs, and showcase your roadmap — all in one place. Free forever. Open source, MIT licensed.",
+    "Collect feedback, publish changelogs, and showcase your roadmap. All in one place. Free forever. Open source, MIT licensed.",
   openGraph: {
     type: "website",
-    title: "Freebase — The Free Product Feedback Platform",
+    title: "Freebase | The Free Product Feedback Platform",
     description: "Collect feedback, publish changelogs, and showcase your roadmap. Free forever.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Freebase — The Free Product Feedback Platform",
+    title: "Freebase | The Free Product Feedback Platform",
     description: "Collect feedback, publish changelogs, and showcase your roadmap. Free forever.",
   },
 };

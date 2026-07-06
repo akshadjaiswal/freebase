@@ -3,7 +3,7 @@ import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Docs",
-  description: "Freebase documentation — widget setup, API keys, webhooks, and changelog.",
+  description: "Freebase documentation: widget setup, API keys, webhooks, and changelog.",
 };
 
 const sections = [
@@ -159,7 +159,7 @@ const token = jwt.sign(
             <SectionTitle id="api-keys">API Keys</SectionTitle>
             <P>
               Create API keys in Settings → API Keys. Keys use the format <Code>fb_live_xxx</Code> and
-              provide full admin access to your org via the REST API. Use them in server-side code only —
+              provide full admin access to your org via the REST API. Use them in server-side code only,
               never in browser or mobile clients.
             </P>
             <CodeBlock lang="bash">{`# List feedback posts

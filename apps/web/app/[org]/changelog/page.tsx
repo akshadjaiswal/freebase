@@ -14,7 +14,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { org: orgSlug } = await params;
   const org = await getOrgBySlug(orgSlug);
   if (!org) return {};
-  const title = `${org.name} — Changelog`;
+  const title = `${org.name} | Changelog`;
   const description = `Product updates and new features from ${org.name}.`;
   return {
     title,

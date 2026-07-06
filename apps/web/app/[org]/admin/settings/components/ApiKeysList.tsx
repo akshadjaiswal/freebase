@@ -18,7 +18,7 @@ export function ApiKeysList({ apiKeys, onNew, onDelete }: ApiKeysListProps) {
         <div className="flex items-center gap-2">
           <Key className="h-4 w-4 text-[var(--text-muted)]" />
           <h2 className="text-sm font-semibold text-[var(--text-primary)]">API Keys</h2>
-          <FieldInfo text="Bearer tokens for server-to-server REST API access. Use in your backend or CI — never in browser code. Authorization: Bearer fb_live_xxx" />
+          <FieldInfo text="Bearer tokens for server-to-server REST API access. Use in your backend or CI only, never in browser code. Authorization: Bearer fb_live_xxx" />
         </div>
         <Button size="sm" variant="outline" className="gap-1.5" onClick={onNew}>
           <Plus className="h-3.5 w-3.5" /> New key
