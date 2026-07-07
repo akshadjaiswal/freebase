@@ -94,6 +94,57 @@ export default function DocsPage() {
 </script>
 <script src="${appUrl}/cdn/v1/sdk.js" async></script>`}</CodeBlock>
 
+            <SubTitle>Next.js (App Router)</SubTitle>
+            <P>
+              Use <Code>next/script</Code> with <Code>strategy="afterInteractive"</Code> in your root layout.
+              Your org must be created at <Code>/new</Code> before the widget can initialize.
+            </P>
+            <CodeBlock lang="tsx">{`// app/layout.tsx
+import Script from "next/script";
+
+export default function RootLayout({ children }) {
+  return (
+    <html>
+      <body>
+        {children}
+        <Script
+          src="${appUrl}/cdn/v1/sdk.js"
+          strategy="afterInteractive"
+          onLoad={() => {
+            window.Freebase?.('init', { org: 'your-org-slug' });
+          }}
+        />
+      </body>
+    </html>
+  );
+}`}</CodeBlock>
+
+            <SubTitle>React (Create React App / Vite)</SubTitle>
+            <P>
+              Use a <Code>useEffect</Code> hook to guard against SSR and load the script once on mount.
+            </P>
+            <CodeBlock lang="tsx">{`import { useEffect } from "react";
+
+export function FreebaseWidget() {
+  useEffect(() => {
+    window.Freebase =
+      window.Freebase ||
+      function (...a) {
+        (window.Freebase.q = window.Freebase.q || []).push(a);
+      };
+    window.Freebase("init", { org: "your-org-slug" });
+
+    const script = document.createElement("script");
+    script.src = "${appUrl}/cdn/v1/sdk.js";
+    script.async = true;
+    document.head.appendChild(script);
+  }, []);
+
+  return null;
+}
+
+// Mount <FreebaseWidget /> once in your root App component`}</CodeBlock>
+
             <SubTitle>Identify logged-in users (optional)</SubTitle>
             <P>
               Call <Code>identify</Code> after <Code>init</Code> to tie feedback and votes to real user accounts.
@@ -107,6 +158,18 @@ window.Freebase('identify', {
   jwt: '<server-signed-jwt>',
 });
             `}</CodeBlock>
+
+            <SubTitle>Identify in React (after login)</SubTitle>
+            <CodeBlock lang="tsx">{`// Call when user auth state changes
+useEffect(() => {
+  if (!user) return;
+  window.Freebase?.("identify", {
+    userId: user.id,
+    email: user.email,
+    name: user.name,
+    jwt: user.freebaseJwt, // server-signed JWT
+  });
+}, [user]);`}</CodeBlock>
 
             <SubTitle>Signing the JWT (Node.js)</SubTitle>
             <CodeBlock lang="js">{`
