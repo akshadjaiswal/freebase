@@ -145,15 +145,16 @@ This file is the primary context for building Freebase. Read it at the start of 
 ### Phase 5 — Embeddable Widget
 - `apps/widget/package.json` — `@freebase/widget` workspace, Vite build
 - `apps/widget/vite.config.ts` — IIFE lib mode, `fileName: () => "sdk.js"`, esbuild minify
-- `apps/widget/src/index.ts` — `window.Freebase` command queue boot, dispatches init/identify/open/getUnreadCount
+- `apps/widget/src/index.ts` — `window.Freebase` command queue boot, dispatches init/identify/open/getUnreadCount; creates the single launcher via `createLauncher()` and hands each surface's button to it instead of appending buttons directly to `document.body`
 - `apps/widget/src/api.ts` — fetch helpers, base URL, JWT header attachment via `X-Freebase-User`
-- `apps/widget/src/styles.ts` — full CSS string injected via `<style>` tag; unified `.fb-window` class replaces old `.fb-panel` / `.fb-popup` / `.fb-overlay`; scale+translateY open animation via `cubic-bezier(0.16,1,0.3,1)`
-- `apps/widget/src/feedback.ts` — floating pencil button + `.fb-window` (560px height, bottom:88px) + form + success state; no overlay
-- `apps/widget/src/changelog.ts` — "What's new" button + unread badge (localStorage) + `.fb-window` (500px height)
-- `apps/widget/src/roadmap.ts` — roadmap floating button (stacked above feedback) + `.fb-window` (580px height) + read-only kanban; no overlay
+- `apps/widget/src/launcher.ts` — single collapsed launcher button (`.fb-launcher`, message-bubble icon, accent bg) that fans out a speed-dial menu (`.fb-dial`) containing the 3 surface buttons on click; outside-click/Escape collapses; `setUnreadCount(n)` drives the badge shown on the collapsed launcher
+- `apps/widget/src/styles.ts` — full CSS string injected via `<style>` tag; unified `.fb-window` class replaces old `.fb-panel` / `.fb-popup` / `.fb-overlay`; scale+translateY open animation via `cubic-bezier(0.16,1,0.3,1)`; `.fb-launcher` + `.fb-dial` + `.fb-btn-dial-item` implement the collapsed-launcher/speed-dial pattern (replaced the old 3-stacked-independent-buttons layout); `@media (max-width: 480px)` turns `.fb-window` into a full-screen bottom sheet and repositions the launcher closer to the screen edge
+- `apps/widget/src/feedback.ts` — pencil icon button (now a dial item, no independent fixed position) + `.fb-window` (560px height, bottom:88px) + form + success state; no overlay
+- `apps/widget/src/changelog.ts` — bell icon button (dial item) + unread badge (localStorage) shown both on the button itself and relayed via `onUnreadChange` callback to the launcher's collapsed badge + `.fb-window` (500px height)
+- `apps/widget/src/roadmap.ts` — map icon button (dial item) + `.fb-window` (580px height) + read-only kanban; no overlay
 - `apps/web/app/api/widget/[org]/config/route.ts` — GET org name/accentColor/categories (public, no auth)
 - `apps/web/app/api/widget/[org]/identify/route.ts` — POST verify JWT, rate limited 60/min
-- `apps/web/public/cdn/v1/sdk.js` — built bundle (6.2 kB gzip, <20KB limit)
+- `apps/web/public/cdn/v1/sdk.js` — built bundle (~7 kB gzip, <20KB limit)
 - `apps/web/components/widget-demo.tsx` — `"use client"` component that loads `/cdn/v1/sdk.js` and calls `window.Freebase('init', {...})` on mount; mounted in **root layout** (`apps/web/app/layout.tsx`) — NOT the marketing page — so it persists across all routes including admin
 - **Env var:** `NEXT_PUBLIC_WIDGET_DEMO_ORG` — set to an org slug → widget loads on all pages; unset → no widget (safe default)
 
@@ -345,10 +346,11 @@ Key new files:
 - `apps/widget/vite.config.ts` — library mode, `entry: "src/index.ts"`, `fileName: "sdk"`, `formats: ["iife"]`
 - `apps/widget/src/index.ts` — `window.Freebase` command queue, `init` + `identify` commands
 - `apps/widget/src/api.ts` — fetch helpers, attach JWT header when identified
+- `apps/widget/src/launcher.ts` — single collapsed launcher button + speed-dial fan-out for the 3 surface buttons, unread badge
 - `apps/widget/src/styles.ts` — CSS string injected via `<style>` tag, CSS vars, NO Tailwind
-- `apps/widget/src/feedback.ts` — floating button + slide-in panel + form
-- `apps/widget/src/changelog.ts` — "What's new" button + unread badge (localStorage) + popup list
-- `apps/widget/src/roadmap.ts` — roadmap in slide-in panel, read-only 3-column
+- `apps/widget/src/feedback.ts` — pencil dial-item button + slide-in panel + form
+- `apps/widget/src/changelog.ts` — bell dial-item button + unread badge (localStorage) + popup list
+- `apps/widget/src/roadmap.ts` — map dial-item button + slide-in panel, read-only 3-column
 - `apps/web/app/api/widget/[org]/config/route.ts` — GET org config (public, no auth)
 - `apps/web/app/api/widget/[org]/identify/route.ts` — POST verify JWT, rate limited 60/min
 - `apps/web/public/cdn/v1/sdk.js` — built output (copy from `apps/widget/dist/sdk.js`)
@@ -436,6 +438,7 @@ All decisions are locked in `/research/`:
 - [x] Marketing: changelog bullet updated to remove email subscriptions mention; Docs link added to footer
 - [x] Sidebar: Help/Docs link (HelpCircle icon) above ⌘K bar
 - [x] Pre-deployment security fixes: vote DELETE rate limiting, comment DELETE revalidateTag cache invalidation, roadmap GET auth fixed to use verifyAdminOrApiKey (API keys now work), NEXT_PUBLIC_APP_URL required (no localhost default — fails fast on misconfigured deploy)
+- [x] Widget: 3 independent floating buttons (feedback/changelog/roadmap) collapsed into a single launcher (`apps/widget/src/launcher.ts`) that fans out a speed-dial menu on click — fixes excessive screen space usage, especially on mobile. Unread badge (changelog only) now shown on both the collapsed launcher and the changelog dial-item icon. `@media (max-width: 480px)` turns `.fb-window` into a full-screen bottom sheet. Gotcha fixed during implementation: outside-click-to-close must use `e.composedPath()` snapshot, not live `.contains()` checks — the launcher's `innerHTML` icon swap on click detaches the click's own target node mid-bubble, so a live `.contains()` check misreads the click as "outside" and immediately re-closes the dial it just opened.
 
 ## Prisma Client Note (pnpm monorepo)
 
