@@ -3,6 +3,7 @@ import { injectStyles } from "./styles";
 import { createFeedbackWidget } from "./feedback";
 import { createChangelogWidget } from "./changelog";
 import { createRoadmapWidget } from "./roadmap";
+import { createLauncher } from "./launcher";
 
 // Command queue pattern — works even when loaded async
 // Host app calls window.Freebase('cmd', args) before script loads
@@ -46,6 +47,7 @@ let orgConfig: OrgConfig | null = null;
 let appUrl = "";
 let widgetPosition: "bottom-right" | "bottom-left" = "bottom-right";
 const handles: WidgetHandles = { feedback: null, changelog: null, roadmap: null };
+let launcher: ReturnType<typeof createLauncher> | null = null;
 
 async function cmdInit(options: InitOptions) {
   if (initialized) return;
@@ -93,8 +95,20 @@ async function cmdInit(options: InitOptions) {
   }
 
   handles.feedback = createFeedbackWidget(config, position, appUrl, () => closeOthers("feedback"));
-  handles.changelog = createChangelogWidget(config, position, appUrl, () => closeOthers("changelog"));
+  handles.changelog = createChangelogWidget(
+    config,
+    position,
+    appUrl,
+    () => closeOthers("changelog"),
+    (count) => launcher?.setUnreadCount(count)
+  );
   handles.roadmap = createRoadmapWidget(config, position, appUrl, () => closeOthers("roadmap"));
+
+  // Collapse behind a single launcher — clicking it fans out the 3 surface buttons
+  launcher = createLauncher(position);
+  launcher.addSurfaceButton(handles.feedback.getButton());
+  launcher.addSurfaceButton(handles.changelog.getButton());
+  launcher.addSurfaceButton(handles.roadmap.getButton());
 }
 
 async function cmdIdentify(options: IdentifyOptions) {
