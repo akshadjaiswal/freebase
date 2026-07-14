@@ -1,7 +1,5 @@
 import { OrgConfig, submitFeedback, getIdentityToken } from "./api";
 
-const BTN_BOTTOM_BASE = "24px";
-
 const PENCIL_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>`;
 const CLOSE_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>`;
 const CHECK_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
@@ -23,10 +21,9 @@ export function createFeedbackWidget(
 
   // Floating button
   const btn = document.createElement("button");
-  btn.className = `fb-btn-float ${posClass}`;
+  btn.className = "fb-btn-surface";
   btn.setAttribute("aria-label", "Submit feedback");
   btn.innerHTML = PENCIL_ICON;
-  btn.style.bottom = BTN_BOTTOM_BASE;
 
   // Floating window
   const panel = document.createElement("div");
