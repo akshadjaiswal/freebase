@@ -3,6 +3,7 @@ import { injectStyles } from "./styles";
 import { createFeedbackWidget } from "./feedback";
 import { createChangelogWidget } from "./changelog";
 import { createRoadmapWidget } from "./roadmap";
+import { createLauncher } from "./launcher";
 
 // Command queue pattern — works even when loaded async
 // Host app calls window.Freebase('cmd', args) before script loads
@@ -46,6 +47,7 @@ let orgConfig: OrgConfig | null = null;
 let appUrl = "";
 let widgetPosition: "bottom-right" | "bottom-left" = "bottom-right";
 const handles: WidgetHandles = { feedback: null, changelog: null, roadmap: null };
+let launcher: ReturnType<typeof createLauncher> | null = null;
 
 async function cmdInit(options: InitOptions) {
   if (initialized) return;
@@ -92,9 +94,43 @@ async function cmdInit(options: InitOptions) {
     if (except !== "roadmap") handles.roadmap?.close();
   }
 
-  handles.feedback = createFeedbackWidget(config, position, appUrl, () => closeOthers("feedback"));
-  handles.changelog = createChangelogWidget(config, position, appUrl, () => closeOthers("changelog"));
-  handles.roadmap = createRoadmapWidget(config, position, appUrl, () => closeOthers("roadmap"));
+  // Tracks whether any surface window is currently open, so the launcher can
+  // stay visually expanded and skip auto-collapsing on outside clicks
+  const surfaceOpenState = { feedback: false, changelog: false, roadmap: false };
+  function onSurfaceOpenChange(surface: "feedback" | "changelog" | "roadmap", open: boolean) {
+    surfaceOpenState[surface] = open;
+    const anyOpen = surfaceOpenState.feedback || surfaceOpenState.changelog || surfaceOpenState.roadmap;
+    launcher?.setSurfaceOpen(anyOpen);
+  }
+
+  handles.feedback = createFeedbackWidget(
+    config,
+    position,
+    appUrl,
+    () => closeOthers("feedback"),
+    (open) => onSurfaceOpenChange("feedback", open)
+  );
+  handles.changelog = createChangelogWidget(
+    config,
+    position,
+    appUrl,
+    () => closeOthers("changelog"),
+    (count) => launcher?.setUnreadCount(count),
+    (open) => onSurfaceOpenChange("changelog", open)
+  );
+  handles.roadmap = createRoadmapWidget(
+    config,
+    position,
+    appUrl,
+    () => closeOthers("roadmap"),
+    (open) => onSurfaceOpenChange("roadmap", open)
+  );
+
+  // Collapse behind a single launcher — clicking it fans out the 3 surface buttons
+  launcher = createLauncher(position);
+  launcher.addSurfaceButton(handles.feedback.getButton());
+  launcher.addSurfaceButton(handles.changelog.getButton());
+  launcher.addSurfaceButton(handles.roadmap.getButton());
 }
 
 async function cmdIdentify(options: IdentifyOptions) {

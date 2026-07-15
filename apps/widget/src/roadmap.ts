@@ -1,7 +1,5 @@
 import { OrgConfig, RoadmapData, fetchRoadmap } from "./api";
 
-const BTN_BOTTOM_STACKED = "84px";
-
 const MAP_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>`;
 const CLOSE_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>`;
 
@@ -9,17 +7,17 @@ export function createRoadmapWidget(
   config: OrgConfig,
   position: "bottom-right" | "bottom-left",
   appUrl: string,
-  closeOthers: () => void = () => {}
+  closeOthers: () => void = () => {},
+  onOpenChange?: (open: boolean) => void
 ) {
   const posClass = position === "bottom-left" ? "fb-left" : "fb-right";
   let isOpen = false;
 
   // Floating button (map icon)
   const btn = document.createElement("button");
-  btn.className = `fb-btn-float ${posClass}`;
+  btn.className = "fb-btn-surface";
   btn.setAttribute("aria-label", "Roadmap");
   btn.innerHTML = MAP_ICON;
-  btn.style.bottom = BTN_BOTTOM_STACKED;
 
   // Floating window
   const panel = document.createElement("div");
@@ -36,11 +34,13 @@ export function createRoadmapWidget(
     isOpen = true;
     panel.classList.add("fb-open");
     loadRoadmap();
+    onOpenChange?.(true);
   }
 
   function closePanel() {
     isOpen = false;
     panel.classList.remove("fb-open");
+    onOpenChange?.(false);
   }
 
   async function loadRoadmap() {
@@ -67,7 +67,8 @@ export function createRoadmapWidget(
   panel.querySelector(".fb-close")?.addEventListener("click", closePanel);
 
   document.addEventListener("click", (e) => {
-    if (isOpen && !panel.contains(e.target as Node) && !btn.contains(e.target as Node)) {
+    const path = e.composedPath();
+    if (isOpen && !path.includes(panel) && !path.includes(btn)) {
       closePanel();
     }
   });

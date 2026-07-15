@@ -1,7 +1,7 @@
-(function(){"use strict";let $=null,E="";function R(e){E=e}function z(e){$=e}function D(e){const t={"Content-Type":"application/json",...e};return $&&(t["X-Freebase-User"]=$),t}async function k(e,t={}){try{const o=await fetch(`${E}${e}`,{...t,headers:D(t.headers)});return o.ok?o.json():null}catch(o){return null}}async function W(e){return k(`/api/widget/${e}/config`)}async function J(e,t){return k(`/api/widget/${e}/identify`,{method:"POST",body:JSON.stringify({jwt:t})})}async function K(e){var o;const t=await k(`/api/v1/orgs/${e}/changelog?status=published&limit=5`);return(o=t==null?void 0:t.data)!=null?o:[]}async function Y(e){return k(`/api/v1/orgs/${e}/roadmap`)}async function G(e,t){return await k(`/api/v1/orgs/${e}/posts`,{method:"POST",body:JSON.stringify(t)})!==null}function X(e){const t="freebase-styles";if(document.getElementById(t))return;const o=document.createElement("style");o.id=t,o.textContent=V(e),document.head.appendChild(o)}function V(e){return`
+(function(){"use strict";let C=null,M="";function W(e){M=e}function N(e){C=e}function J(e){const t={"Content-Type":"application/json",...e};return C&&(t["X-Freebase-User"]=C),t}async function $(e,t={}){try{const n=await fetch(`${M}${e}`,{...t,headers:J(t.headers)});return n.ok?n.json():null}catch(n){return null}}async function K(e){return $(`/api/widget/${e}/config`)}async function G(e,t){return $(`/api/widget/${e}/identify`,{method:"POST",body:JSON.stringify({jwt:t})})}async function X(e){var n;const t=await $(`/api/v1/orgs/${e}/changelog?status=published&limit=5`);return(n=t==null?void 0:t.data)!=null?n:[]}async function V(e){return $(`/api/v1/orgs/${e}/roadmap`)}async function Z(e,t){return await $(`/api/v1/orgs/${e}/posts`,{method:"POST",body:JSON.stringify(t)})!==null}function Q(e){const t="freebase-styles";if(document.getElementById(t))return;const n=document.createElement("style");n.id=t,n.textContent=ee(e),document.head.appendChild(n)}function ee(e){return`
 :root {
   --fb-accent: ${e};
-  --fb-accent-hover: ${Z(e)};
+  --fb-accent-hover: ${te(e)};
   --fb-bg: #0e0e10;
   --fb-surface: #141416;
   --fb-surface-raised: #1c1c1f;
@@ -47,11 +47,11 @@
   --fb-text-muted: #a1a1aa;
 }
 
-.fb-btn-float {
+.fb-launcher {
   position: fixed;
   bottom: 24px;
-  width: 48px;
-  height: 48px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
   background: var(--fb-accent);
   color: #fff;
@@ -61,43 +61,75 @@
   align-items: center;
   justify-content: center;
   box-shadow: 0 4px 16px rgba(0,0,0,0.32);
-  z-index: var(--fb-z);
+  z-index: calc(var(--fb-z) + 2);
   transition: transform 150ms ease, background 150ms ease;
   padding: 0;
 }
 
-.fb-btn-float:hover {
+.fb-launcher:hover {
   background: var(--fb-accent-hover);
   transform: scale(1.06);
 }
 
-.fb-btn-float.fb-right { right: 24px; }
-.fb-btn-float.fb-left  { left: 24px; }
+.fb-launcher.fb-right { right: 24px; }
+.fb-launcher.fb-left  { left: 24px; }
 
-.fb-btn-whats-new {
+.fb-dial {
   position: fixed;
-  bottom: 156px;
+  bottom: 92px;
   display: flex;
+  flex-direction: column-reverse;
   align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  background: var(--fb-surface);
-  border: 1px solid var(--fb-border);
-  border-radius: 20px;
-  color: var(--fb-text);
-  font-size: 13px;
-  font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
-  cursor: pointer;
-  z-index: var(--fb-z);
-  transition: background 150ms ease;
-  white-space: nowrap;
+  gap: 12px;
+  z-index: calc(var(--fb-z) + 1);
 }
 
-.fb-btn-whats-new:hover { background: var(--fb-surface-raised); }
-.fb-btn-whats-new.fb-right { right: 24px; }
-.fb-btn-whats-new.fb-left  { left: 24px; }
+.fb-dial.fb-right { right: 28px; }
+.fb-dial.fb-left  { left: 28px; }
+
+.fb-btn-surface {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--fb-surface-raised);
+  border: 1px solid var(--fb-border);
+  color: var(--fb-text);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.28);
+  transition: background 150ms ease, transform 150ms ease;
+  padding: 0;
+}
+
+.fb-btn-surface:hover {
+  background: var(--fb-surface);
+  transform: scale(1.06);
+}
+
+.fb-btn-dial-item {
+  opacity: 0;
+  transform: scale(0.5) translateY(16px);
+  pointer-events: none;
+  transition: opacity 160ms ease, transform 160ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.fb-dial.fb-dial-open .fb-btn-dial-item {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+
+.fb-dial.fb-dial-open .fb-btn-dial-item:nth-child(1) { transition-delay: 40ms; }
+.fb-dial.fb-dial-open .fb-btn-dial-item:nth-child(2) { transition-delay: 90ms; }
+.fb-dial.fb-dial-open .fb-btn-dial-item:nth-child(3) { transition-delay: 140ms; }
 
 .fb-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -418,27 +450,51 @@
   color: var(--fb-text-muted);
   font-size: 13px;
 }
-`}function Z(e){const t=parseInt(e.replace("#",""),16),o=Math.max(0,(t>>16&255)-25),i=Math.max(0,(t>>8&255)-25),a=Math.max(0,(t&255)-25);return`#${(o<<16|i<<8|a).toString(16).padStart(6,"0")}`}const Q="24px",ee='<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>',te='<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>',ne='<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';function oe(e,t,o,i=()=>{}){var l;const a={open:!1,submitting:!1,success:!1},f=t==="bottom-left"?"fb-left":"fb-right",r=document.createElement("button");r.className=`fb-btn-float ${f}`,r.setAttribute("aria-label","Submit feedback"),r.innerHTML=ee,r.style.bottom=Q;const n=document.createElement("div");n.className=`fb-window ${f}`,n.setAttribute("data-fb-theme","dark"),n.style.cssText="height:560px;bottom:88px",n.innerHTML=ae(e),document.body.appendChild(n),document.body.appendChild(r);function b(){i(),a.open=!0,n.classList.add("fb-open")}function p(){a.open=!1,n.classList.remove("fb-open")}function u(){a.success=!1;const c=n.querySelector(".fb-window-body");c&&(c.innerHTML=T(e)),x()}function x(){const c=n.querySelector("#fb-feedback-form");c&&c.addEventListener("submit",async d=>{var P,F,U;if(d.preventDefault(),a.submitting)return;const s=n.querySelector("#fb-title"),g=n.querySelector("#fb-desc"),v=n.querySelector("#fb-email"),L=n.querySelector("#fb-category"),y=n.querySelector(".fb-error"),h=n.querySelector("#fb-submit"),I=(P=s==null?void 0:s.value.trim())!=null?P:"",Ce=(g==null?void 0:g.value.trim())||void 0,_=(F=v==null?void 0:v.value.trim())!=null?F:"",$e=(L==null?void 0:L.value)||void 0;if(I.length<5){y&&(y.textContent="Title must be at least 5 characters.");return}if(!_){y&&(y.textContent="Email is required.");return}a.submitting=!0,h&&(h.disabled=!0),h&&(h.textContent="Submitting...");const Se=await G(e.slug,{title:I,description:Ce,categoryId:$e,authorEmail:_});if(a.submitting=!1,!Se){h&&(h.disabled=!1),h&&(h.textContent="Submit"),y&&(y.textContent="Failed to submit. Please try again.");return}a.success=!0;const A=n.querySelector(".fb-window-body");A&&(A.innerHTML=`
+
+@media (max-width: 480px) {
+  .fb-window {
+    right: 0 !important;
+    left: 0 !important;
+    bottom: 0 !important;
+    width: 100%;
+    max-width: 100%;
+    height: 100% !important;
+    border-radius: 0;
+    transform: translateY(100%);
+    transition: opacity 200ms ease-out, transform 220ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .fb-window.fb-open { transform: translateY(0); }
+
+  .fb-launcher { bottom: 16px; }
+  .fb-launcher.fb-right { right: 16px; }
+  .fb-launcher.fb-left  { left: 16px; }
+
+  .fb-dial { bottom: 80px; }
+  .fb-dial.fb-right { right: 20px; }
+  .fb-dial.fb-left  { left: 20px; }
+}
+`}function te(e){const t=parseInt(e.replace("#",""),16),n=Math.max(0,(t>>16&255)-25),c=Math.max(0,(t>>8&255)-25),a=Math.max(0,(t&255)-25);return`#${(n<<16|c<<8|a).toString(16).padStart(6,"0")}`}const oe='<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>',ne='<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>',ae='<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';function re(e,t,n,c=()=>{},a){var u;const i={open:!1,submitting:!1,success:!1},p=t==="bottom-left"?"fb-left":"fb-right",s=document.createElement("button");s.className="fb-btn-surface",s.setAttribute("aria-label","Submit feedback"),s.innerHTML=oe;const r=document.createElement("div");r.className=`fb-window ${p}`,r.setAttribute("data-fb-theme","dark"),r.style.cssText="height:560px;bottom:88px",r.innerHTML=ie(e),document.body.appendChild(r),document.body.appendChild(s);function f(){c(),i.open=!0,r.classList.add("fb-open"),a==null||a(!0)}function o(){i.open=!1,r.classList.remove("fb-open"),a==null||a(!1)}function m(){i.success=!1;const l=r.querySelector(".fb-window-body");l&&(l.innerHTML=T(e)),w()}function w(){const l=r.querySelector("#fb-feedback-form");l&&l.addEventListener("submit",async x=>{var D,U,Y;if(x.preventDefault(),i.submitting)return;const b=r.querySelector("#fb-title"),d=r.querySelector("#fb-desc"),h=r.querySelector("#fb-email"),S=r.querySelector("#fb-category"),L=r.querySelector(".fb-error"),y=r.querySelector("#fb-submit"),F=(D=b==null?void 0:b.value.trim())!=null?D:"",Ce=(d==null?void 0:d.value.trim())||void 0,R=(U=h==null?void 0:h.value.trim())!=null?U:"",ze=(S==null?void 0:S.value)||void 0;if(F.length<5){L&&(L.textContent="Title must be at least 5 characters.");return}if(!R){L&&(L.textContent="Email is required.");return}i.submitting=!0,y&&(y.disabled=!0),y&&(y.textContent="Submitting...");const Me=await Z(e.slug,{title:F,description:Ce,categoryId:ze,authorEmail:R});if(i.submitting=!1,!Me){y&&(y.disabled=!1),y&&(y.textContent="Submit"),L&&(L.textContent="Failed to submit. Please try again.");return}i.success=!0;const O=r.querySelector(".fb-window-body");O&&(O.innerHTML=`
           <div class="fb-success">
-            <div class="fb-success-icon">${ne}</div>
+            <div class="fb-success-icon">${ae}</div>
             <div>
               <p style="font-weight:600;margin:0 0 4px;color:var(--fb-text)">Thanks for the feedback!</p>
               <p style="margin:0;font-size:13px">We'll review it shortly.</p>
             </div>
             <button id="fb-reset" style="background:none;border:1px solid var(--fb-border);border-radius:var(--fb-radius);padding:6px 14px;color:var(--fb-text-secondary);font-size:12px;cursor:pointer;font-family:inherit">Submit another</button>
           </div>
-        `,(U=n.querySelector("#fb-reset"))==null||U.addEventListener("click",u))})}return r.addEventListener("click",()=>{a.open?p():b()}),(l=n.querySelector(".fb-close"))==null||l.addEventListener("click",p),document.addEventListener("click",c=>{a.open&&!n.contains(c.target)&&!r.contains(c.target)&&p()}),document.addEventListener("keydown",c=>{c.key==="Escape"&&a.open&&p()}),x(),{open:b,close:p,getButton:()=>r}}function ae(e){return`
+        `,(Y=r.querySelector("#fb-reset"))==null||Y.addEventListener("click",m))})}return s.addEventListener("click",()=>{i.open?o():f()}),(u=r.querySelector(".fb-close"))==null||u.addEventListener("click",o),document.addEventListener("click",l=>{const x=l.composedPath();i.open&&!x.includes(r)&&!x.includes(s)&&o()}),document.addEventListener("keydown",l=>{l.key==="Escape"&&i.open&&o()}),w(),{open:f,close:o,getButton:()=>s}}function ie(e){return`
     <div class="fb-window-header">
       <div class="fb-window-title-row">
         <span class="fb-window-dot"></span>
         <p class="fb-window-title">Submit Feedback</p>
       </div>
-      <button class="fb-close" aria-label="Close">${te}</button>
+      <button class="fb-close" aria-label="Close">${ne}</button>
     </div>
     <div class="fb-window-body">
       ${T(e)}
     </div>
-  `}function T(e){const t=e.categories.map(o=>`<option value="${ie(o.id)}">${re(o.name)}</option>`).join("");return`
+  `}function T(e){const t=e.categories.map(n=>`<option value="${le(n.id)}">${se(n.name)}</option>`).join("");return`
     <form id="fb-feedback-form" style="display:flex;flex-direction:column;gap:0">
       <div class="fb-form-group">
         <label class="fb-label" for="fb-title">Title *</label>
@@ -463,48 +519,48 @@
       <p class="fb-error"></p>
       <button class="fb-btn-submit" id="fb-submit" type="submit">Submit</button>
     </form>
-  `}function re(e){return e.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}function ie(e){return e.replace(/"/g,"&quot;")}const se='<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>',O="freebase_cl_read_";function le(e){try{const t=localStorage.getItem(`${O}${e}`);return t?JSON.parse(t):[]}catch(t){return[]}}function ce(e,t){try{localStorage.setItem(`${O}${e}`,JSON.stringify(t))}catch(o){}}function M(e,t){const o=new Set(le(e));return t.filter(i=>!o.has(i.id)).length}function de(e,t,o,i=()=>{}){var c;const a=t==="bottom-left"?"fb-left":"fb-right";let f=[],r=!1;const n=document.createElement("button");n.className=`fb-btn-whats-new ${a}`,n.setAttribute("aria-label","What's new"),n.innerHTML="<span>What's new</span>";const b=document.createElement("div");b.className=`fb-window ${a}`,b.setAttribute("data-fb-theme","dark"),b.style.cssText="height:500px;bottom:88px",b.innerHTML=fe(e,o),document.body.appendChild(b),document.body.appendChild(n);function p(){i(),r=!0,b.classList.add("fb-open"),ce(e.slug,f.map(d=>d.id)),x(0)}function u(){r=!1,b.classList.remove("fb-open")}function x(d){let s=n.querySelector(".fb-badge");d>0?(s||(s=document.createElement("span"),s.className="fb-badge",n.appendChild(s)),s.textContent=String(d)):s==null||s.remove()}function l(d){const s=b.querySelector(".fb-cl-body");if(s){if(d.length===0){s.innerHTML='<div class="fb-empty">No updates yet.</div>';return}s.innerHTML=d.map(g=>`
-      <div class="fb-cl-item" data-slug="${C(g.slug)}">
-        <p class="fb-cl-item-title">${q(g.title)}</p>
+  `}function se(e){return e.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}function le(e){return e.replace(/"/g,"&quot;")}const ce='<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>',de='<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>',q="freebase_cl_read_";function fe(e){try{const t=localStorage.getItem(`${q}${e}`);return t?JSON.parse(t):[]}catch(t){return[]}}function be(e,t){try{localStorage.setItem(`${q}${e}`,JSON.stringify(t))}catch(n){}}function B(e,t){const n=new Set(fe(e));return t.filter(c=>!n.has(c.id)).length}function ue(e,t,n,c=()=>{},a,i){var x;const p=t==="bottom-left"?"fb-left":"fb-right";let s=[],r=!1;const f=document.createElement("button");f.className="fb-btn-surface",f.setAttribute("aria-label","What's new"),f.innerHTML=ce;const o=document.createElement("div");o.className=`fb-window ${p}`,o.setAttribute("data-fb-theme","dark"),o.style.cssText="height:500px;bottom:88px",o.innerHTML=pe(e,n),document.body.appendChild(o),document.body.appendChild(f);function m(b){let d=f.querySelector(".fb-badge");b>0?(d||(d=document.createElement("span"),d.className="fb-badge",f.appendChild(d)),d.textContent=String(b)):d==null||d.remove()}function w(){c(),r=!0,o.classList.add("fb-open"),be(e.slug,s.map(b=>b.id)),m(0),a==null||a(0),i==null||i(!0)}function u(){r=!1,o.classList.remove("fb-open"),i==null||i(!1)}function l(b){const d=o.querySelector(".fb-cl-body");if(d){if(b.length===0){d.innerHTML='<div class="fb-empty">No updates yet.</div>';return}d.innerHTML=b.map(h=>`
+      <div class="fb-cl-item" data-slug="${E(h.slug)}">
+        <p class="fb-cl-item-title">${H(h.title)}</p>
         <div class="fb-cl-item-meta">
-          <span class="fb-cl-label fb-cl-label-${C(g.label)}">${q(g.label)}</span>
-          <span>${be(g.publishedAt)}</span>
+          <span class="fb-cl-label fb-cl-label-${E(h.label)}">${H(h.label)}</span>
+          <span>${me(h.publishedAt)}</span>
         </div>
       </div>
-    `).join(""),s.querySelectorAll(".fb-cl-item").forEach(g=>{g.addEventListener("click",()=>{const v=g.getAttribute("data-slug");v&&window.open(`${o}/${e.slug}/changelog/${v}`,"_blank")})})}}return K(e.slug).then(d=>{f=d,l(f);const s=M(e.slug,f);x(s)}),n.addEventListener("click",()=>{r?u():p()}),(c=b.querySelector(".fb-close"))==null||c.addEventListener("click",u),document.addEventListener("click",d=>{r&&!b.contains(d.target)&&!n.contains(d.target)&&u()}),document.addEventListener("keydown",d=>{d.key==="Escape"&&r&&u()}),{open:p,close:u,getUnreadCount:()=>M(e.slug,f),getButton:()=>n}}function fe(e,t){return`
+    `).join(""),d.querySelectorAll(".fb-cl-item").forEach(h=>{h.addEventListener("click",()=>{const S=h.getAttribute("data-slug");S&&window.open(`${n}/${e.slug}/changelog/${S}`,"_blank")})})}}return X(e.slug).then(b=>{s=b,l(s);const d=B(e.slug,s);m(d),a==null||a(d)}),f.addEventListener("click",()=>{r?u():w()}),(x=o.querySelector(".fb-close"))==null||x.addEventListener("click",u),document.addEventListener("click",b=>{const d=b.composedPath();r&&!d.includes(o)&&!d.includes(f)&&u()}),document.addEventListener("keydown",b=>{b.key==="Escape"&&r&&u()}),{open:w,close:u,getUnreadCount:()=>B(e.slug,s),getButton:()=>f}}function pe(e,t){return`
     <div class="fb-window-header">
       <div class="fb-window-title-row">
         <span class="fb-window-dot"></span>
         <p class="fb-window-title">What's new</p>
       </div>
-      <button class="fb-close" aria-label="Close">${se}</button>
+      <button class="fb-close" aria-label="Close">${de}</button>
     </div>
     <div class="fb-cl-body">
       <div class="fb-loading">Loading...</div>
     </div>
     <div class="fb-window-footer">
-      <a href="${C(t)}/${C(e.slug)}/changelog" target="_blank" rel="noopener">View all updates →</a>
+      <a href="${E(t)}/${E(e.slug)}/changelog" target="_blank" rel="noopener">View all updates →</a>
     </div>
-  `}function q(e){return e.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}function C(e){return e.replace(/"/g,"&quot;")}function be(e){try{return new Date(e).toLocaleDateString("en-US",{month:"short",day:"numeric"})}catch(t){return""}}const pe="84px",ue='<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>',ge='<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>';function me(e,t,o,i=()=>{}){var x;const a=t==="bottom-left"?"fb-left":"fb-right";let f=!1;const r=document.createElement("button");r.className=`fb-btn-float ${a}`,r.setAttribute("aria-label","Roadmap"),r.innerHTML=ue,r.style.bottom=pe;const n=document.createElement("div");n.className=`fb-window ${a}`,n.setAttribute("data-fb-theme","dark"),n.style.cssText="height:580px;bottom:88px",n.innerHTML=xe(),document.body.appendChild(n),document.body.appendChild(r);function b(){i(),f=!0,n.classList.add("fb-open"),u()}function p(){f=!1,n.classList.remove("fb-open")}async function u(){const l=n.querySelector(".fb-window-body");if(!l)return;const c=await Y(e.slug);if(!c){l.innerHTML='<div class="fb-empty">Could not load roadmap.</div>';return}l.innerHTML=he(c)}return r.addEventListener("click",()=>{f?p():b()}),(x=n.querySelector(".fb-close"))==null||x.addEventListener("click",p),document.addEventListener("click",l=>{f&&!n.contains(l.target)&&!r.contains(l.target)&&p()}),document.addEventListener("keydown",l=>{l.key==="Escape"&&f&&p()}),{open:b,close:p,getButton:()=>r}}function xe(e){return`
+  `}function H(e){return e.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}function E(e){return e.replace(/"/g,"&quot;")}function me(e){try{return new Date(e).toLocaleDateString("en-US",{month:"short",day:"numeric"})}catch(t){return""}}const ge='<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>',xe='<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>';function he(e,t,n,c=()=>{},a){var w;const i=t==="bottom-left"?"fb-left":"fb-right";let p=!1;const s=document.createElement("button");s.className="fb-btn-surface",s.setAttribute("aria-label","Roadmap"),s.innerHTML=ge;const r=document.createElement("div");r.className=`fb-window ${i}`,r.setAttribute("data-fb-theme","dark"),r.style.cssText="height:580px;bottom:88px",r.innerHTML=we(),document.body.appendChild(r),document.body.appendChild(s);function f(){c(),p=!0,r.classList.add("fb-open"),m(),a==null||a(!0)}function o(){p=!1,r.classList.remove("fb-open"),a==null||a(!1)}async function m(){const u=r.querySelector(".fb-window-body");if(!u)return;const l=await V(e.slug);if(!l){u.innerHTML='<div class="fb-empty">Could not load roadmap.</div>';return}u.innerHTML=ve(l)}return s.addEventListener("click",()=>{p?o():f()}),(w=r.querySelector(".fb-close"))==null||w.addEventListener("click",o),document.addEventListener("click",u=>{const l=u.composedPath();p&&!l.includes(r)&&!l.includes(s)&&o()}),document.addEventListener("keydown",u=>{u.key==="Escape"&&p&&o()}),{open:f,close:o,getButton:()=>s}}function we(e){return`
     <div class="fb-window-header">
       <div class="fb-window-title-row">
         <span class="fb-window-dot"></span>
         <p class="fb-window-title">Roadmap</p>
       </div>
-      <button class="fb-close" aria-label="Close">${ge}</button>
+      <button class="fb-close" aria-label="Close">${xe}</button>
     </div>
     <div class="fb-window-body">
       <div class="fb-loading">Loading roadmap...</div>
     </div>
-  `}function he(e){const t=(o,i)=>`
+  `}function ve(e){const t=(n,c)=>`
     <div class="fb-kanban-col">
       <p class="fb-kanban-col-title">
-        ${N(o)}
-        <span class="fb-kanban-col-count">${i.length}</span>
+        ${j(n)}
+        <span class="fb-kanban-col-count">${c.length}</span>
       </p>
-      ${i.length===0?'<div style="font-size:11px;color:var(--fb-text-muted);padding:8px 0">Nothing here yet</div>':i.map(a=>`
+      ${c.length===0?'<div style="font-size:11px;color:var(--fb-text-muted);padding:8px 0">Nothing here yet</div>':c.map(a=>`
           <div class="fb-kanban-card">
-            <p class="fb-kanban-card-title">${N(a.title)}</p>
+            <p class="fb-kanban-card-title">${j(a.title)}</p>
             ${a.votes>0?`<span class="fb-kanban-card-votes">▲ ${a.votes}</span>`:""}
           </div>
         `).join("")}
@@ -515,4 +571,4 @@
       ${t("In Progress",e.inProgress)}
       ${t("Done",e.done)}
     </div>
-  `}function N(e){return e.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}let H=!1,S=null,w="";const m={feedback:null,changelog:null,roadmap:null};async function we(e){var u,x;if(H)return;H=!0;const{org:t,theme:o="auto",position:i="bottom-right",accentColor:a}=e,f=document.currentScript,r=(u=f==null?void 0:f.src)!=null?u:"";try{w=new URL(r).origin}catch(l){w=window.location.origin}R(w);const n=await W(t);if(!n){console.warn("[Freebase] Could not load org config for:",t);return}S=n;const b=(x=a!=null?a:n.accentColor)!=null?x:"#10b981";X(b),o!=="auto"&&document.documentElement.setAttribute("data-fb-theme",o);function p(l){var c,d,s;l!=="feedback"&&((c=m.feedback)==null||c.close()),l!=="changelog"&&((d=m.changelog)==null||d.close()),l!=="roadmap"&&((s=m.roadmap)==null||s.close())}m.feedback=oe(n,i,w,()=>p("feedback")),m.changelog=de(n,i,w,()=>p("changelog")),m.roadmap=me(n,i,w,()=>p("roadmap"))}async function ve(e){if(!S)return;const t=await J(S.slug,e.jwt);t!=null&&t.token?z(t.token):z(e.jwt)}function ye(e){var t,o,i;e==="feedback"&&((t=m.feedback)==null||t.open()),e==="changelog"&&((o=m.changelog)==null||o.open()),e==="roadmap"&&((i=m.roadmap)==null||i.open())}function ke(e){m.changelog?e(m.changelog.getUnreadCount()):e(0)}async function j(e,...t){switch(e){case"init":await we(t[0]);break;case"identify":await ve(t[0]);break;case"open":ye(t[0]);break;case"getUnreadCount":ke(t[0]);break;default:console.warn("[Freebase] Unknown command:",e)}}function B(){var i;const e=window.Freebase,t=(i=e==null?void 0:e.q)!=null?i:[],o=(...a)=>{j(a[0],...a.slice(1))};window.Freebase=o;for(const a of t)j(a[0],...a.slice(1))}document.readyState==="loading"?document.addEventListener("DOMContentLoaded",B):B()})();
+  `}function j(e){return e.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}const I='<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>',ye='<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>';function ke(e){const t=e==="bottom-left"?"fb-left":"fb-right";let n=!1,c=!1;const a=document.createElement("div");a.className=`fb-dial ${t}`;const i=document.createElement("button");i.className=`fb-launcher ${t}`,i.setAttribute("aria-label","Open feedback menu"),i.setAttribute("aria-expanded","false");const p=document.createElement("span");p.className="fb-launcher-icon",p.innerHTML=I,i.appendChild(p);const s=document.createElement("span");s.className="fb-badge",s.style.display="none",i.appendChild(s);function r(){return n||c}function f(){const o=r();a.classList.toggle("fb-dial-open",o),i.classList.toggle("fb-launcher-open",o),p.innerHTML=o?ye:I,i.setAttribute("aria-expanded",String(o)),i.setAttribute("aria-label",o?"Close feedback menu":"Open feedback menu"),a.querySelectorAll(".fb-btn-dial-item").forEach(m=>{m.tabIndex=o?0:-1})}return i.addEventListener("click",()=>{n=!n,f()}),document.addEventListener("click",o=>{const m=o.composedPath();n&&!c&&!m.includes(a)&&!m.includes(i)&&(n=!1,f())}),document.addEventListener("keydown",o=>{o.key==="Escape"&&n&&!c&&(n=!1,f())}),document.body.appendChild(a),document.body.appendChild(i),{addSurfaceButton(o){o.classList.add("fb-btn-dial-item"),o.tabIndex=-1,a.appendChild(o)},setSurfaceOpen(o){c=o,o||(n=!1),f()},setUnreadCount(o){o>0?(s.textContent=String(o),s.style.display="inline-flex"):s.style.display="none"}}}let A=!1,z=null,k="";const g={feedback:null,changelog:null,roadmap:null};let v=null;async function Se(e){var w,u;if(A)return;A=!0;const{org:t,theme:n="auto",position:c="bottom-right",accentColor:a}=e,i=document.currentScript,p=(w=i==null?void 0:i.src)!=null?w:"";try{k=new URL(p).origin}catch(l){k=window.location.origin}W(k);const s=await K(t);if(!s){console.warn("[Freebase] Could not load org config for:",t);return}z=s;const r=(u=a!=null?a:s.accentColor)!=null?u:"#10b981";Q(r),n!=="auto"&&document.documentElement.setAttribute("data-fb-theme",n);function f(l){var x,b,d;l!=="feedback"&&((x=g.feedback)==null||x.close()),l!=="changelog"&&((b=g.changelog)==null||b.close()),l!=="roadmap"&&((d=g.roadmap)==null||d.close())}const o={feedback:!1,changelog:!1,roadmap:!1};function m(l,x){o[l]=x;const b=o.feedback||o.changelog||o.roadmap;v==null||v.setSurfaceOpen(b)}g.feedback=re(s,c,k,()=>f("feedback"),l=>m("feedback",l)),g.changelog=ue(s,c,k,()=>f("changelog"),l=>v==null?void 0:v.setUnreadCount(l),l=>m("changelog",l)),g.roadmap=he(s,c,k,()=>f("roadmap"),l=>m("roadmap",l)),v=ke(c),v.addSurfaceButton(g.feedback.getButton()),v.addSurfaceButton(g.changelog.getButton()),v.addSurfaceButton(g.roadmap.getButton())}async function Le(e){if(!z)return;const t=await G(z.slug,e.jwt);t!=null&&t.token?N(t.token):N(e.jwt)}function $e(e){var t,n,c;e==="feedback"&&((t=g.feedback)==null||t.open()),e==="changelog"&&((n=g.changelog)==null||n.open()),e==="roadmap"&&((c=g.roadmap)==null||c.open())}function Ee(e){g.changelog?e(g.changelog.getUnreadCount()):e(0)}async function P(e,...t){switch(e){case"init":await Se(t[0]);break;case"identify":await Le(t[0]);break;case"open":$e(t[0]);break;case"getUnreadCount":Ee(t[0]);break;default:console.warn("[Freebase] Unknown command:",e)}}function _(){var c;const e=window.Freebase,t=(c=e==null?void 0:e.q)!=null?c:[],n=(...a)=>{P(a[0],...a.slice(1))};window.Freebase=n;for(const a of t)P(a[0],...a.slice(1))}document.readyState==="loading"?document.addEventListener("DOMContentLoaded",_):_()})();

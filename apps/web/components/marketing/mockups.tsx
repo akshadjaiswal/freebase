@@ -1,4 +1,7 @@
-import { ChevronUp, CheckCircle2, Clock, Circle } from "lucide-react";
+"use client";
+
+import { ChevronUp, MessageCircle, Map, Bell } from "lucide-react";
+import { motion } from "motion/react";
 
 export function FeedbackBoardMockup() {
   const posts = [
@@ -115,7 +118,7 @@ export function RoadmapMockup() {
 
 export function WidgetMockup() {
   return (
-    <div className="relative rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-4 overflow-hidden min-h-[200px]">
+    <div className="relative rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-4 overflow-hidden min-h-[240px]">
       <div className="mb-3 flex items-center gap-2">
         <div className="h-2 w-2 rounded-full bg-[var(--error)]/50" />
         <div className="h-2 w-2 rounded-full bg-[var(--warning)]/50" />
@@ -136,18 +139,32 @@ export function WidgetMockup() {
           </div>
         </div>
       </div>
-      {/* Floating buttons */}
+      {/* Collapsed launcher — animated loop showing it fan out into a menu and back */}
       <div className="absolute bottom-4 right-4 flex flex-col gap-2 items-end">
-        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--accent)] shadow-lg">
-          <CheckCircle2 className="h-4 w-4 text-[var(--accent-foreground)]" />
-        </div>
-        <div className="relative flex h-9 w-9 items-center justify-center rounded-full bg-[var(--surface-overlay)] border border-[var(--border)]">
-          <Circle className="h-4 w-4 text-[var(--text-secondary)]" />
-          <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--accent)] text-[8px] font-bold text-[var(--accent-foreground)]">3</span>
-        </div>
-        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--surface-overlay)] border border-[var(--border)]">
-          <Clock className="h-4 w-4 text-[var(--text-secondary)]" />
-        </div>
+        <motion.div
+          className="flex h-8 w-8 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--surface-overlay)]"
+          initial={{ opacity: 0, scale: 0.5 }}
+          animate={{ opacity: [0, 1, 1, 0], scale: [0.5, 1, 1, 0.5] }}
+          transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut", times: [0, 0.18, 0.7, 0.88] }}
+        >
+          <Map className="h-3.5 w-3.5 text-[var(--text-secondary)]" />
+        </motion.div>
+        <motion.div
+          className="flex h-8 w-8 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--surface-overlay)]"
+          initial={{ opacity: 0, scale: 0.5 }}
+          animate={{ opacity: [0, 1, 1, 0], scale: [0.5, 1, 1, 0.5] }}
+          transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut", times: [0, 0.18, 0.7, 0.88], delay: 0.08 }}
+        >
+          <Bell className="h-3.5 w-3.5 text-[var(--text-secondary)]" />
+        </motion.div>
+        <motion.div
+          className="relative flex h-9 w-9 items-center justify-center rounded-full bg-[var(--accent)] shadow-lg"
+          animate={{ scale: [1, 1, 1.06, 1, 1] }}
+          transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut", times: [0, 0.15, 0.22, 0.3, 1] }}
+        >
+          <MessageCircle className="h-4 w-4 text-[var(--accent-foreground)]" />
+          <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full border-2 border-[var(--surface)] bg-[var(--error)] text-[8px] font-bold text-white">3</span>
+        </motion.div>
       </div>
     </div>
   );
