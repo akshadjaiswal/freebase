@@ -7,7 +7,8 @@ export function createRoadmapWidget(
   config: OrgConfig,
   position: "bottom-right" | "bottom-left",
   appUrl: string,
-  closeOthers: () => void = () => {}
+  closeOthers: () => void = () => {},
+  onOpenChange?: (open: boolean) => void
 ) {
   const posClass = position === "bottom-left" ? "fb-left" : "fb-right";
   let isOpen = false;
@@ -33,11 +34,13 @@ export function createRoadmapWidget(
     isOpen = true;
     panel.classList.add("fb-open");
     loadRoadmap();
+    onOpenChange?.(true);
   }
 
   function closePanel() {
     isOpen = false;
     panel.classList.remove("fb-open");
+    onOpenChange?.(false);
   }
 
   async function loadRoadmap() {

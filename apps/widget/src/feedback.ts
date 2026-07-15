@@ -14,7 +14,8 @@ export function createFeedbackWidget(
   config: OrgConfig,
   position: "bottom-right" | "bottom-left",
   appUrl: string,
-  closeOthers: () => void = () => {}
+  closeOthers: () => void = () => {},
+  onOpenChange?: (open: boolean) => void
 ) {
   const state: FeedbackState = { open: false, submitting: false, success: false };
   const posClass = position === "bottom-left" ? "fb-left" : "fb-right";
@@ -39,11 +40,13 @@ export function createFeedbackWidget(
     closeOthers();
     state.open = true;
     panel.classList.add("fb-open");
+    onOpenChange?.(true);
   }
 
   function closePanel() {
     state.open = false;
     panel.classList.remove("fb-open");
+    onOpenChange?.(false);
   }
 
   function resetForm() {

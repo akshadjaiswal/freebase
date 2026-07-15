@@ -30,7 +30,8 @@ export function createChangelogWidget(
   position: "bottom-right" | "bottom-left",
   appUrl: string,
   closeOthers: () => void = () => {},
-  onUnreadChange?: (count: number) => void
+  onUnreadChange?: (count: number) => void,
+  onOpenChange?: (open: boolean) => void
 ) {
   const posClass = position === "bottom-left" ? "fb-left" : "fb-right";
   let entries: ChangelogEntry[] = [];
@@ -74,11 +75,13 @@ export function createChangelogWidget(
     markAllRead(config.slug, entries.map((e) => e.id));
     updateBadge(0);
     onUnreadChange?.(0);
+    onOpenChange?.(true);
   }
 
   function closePopup() {
     isOpen = false;
     popup.classList.remove("fb-open");
+    onOpenChange?.(false);
   }
 
   function renderEntries(items: ChangelogEntry[]) {

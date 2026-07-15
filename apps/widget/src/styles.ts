@@ -85,7 +85,6 @@ function buildCss(accent: string): string {
   transform: scale(1.06);
 }
 
-.fb-launcher.fb-launcher-open { transform: rotate(0deg); }
 .fb-launcher.fb-right { right: 24px; }
 .fb-launcher.fb-left  { left: 24px; }
 

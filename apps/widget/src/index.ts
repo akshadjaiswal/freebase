@@ -94,15 +94,37 @@ async function cmdInit(options: InitOptions) {
     if (except !== "roadmap") handles.roadmap?.close();
   }
 
-  handles.feedback = createFeedbackWidget(config, position, appUrl, () => closeOthers("feedback"));
+  // Tracks whether any surface window is currently open, so the launcher can
+  // stay visually expanded and skip auto-collapsing on outside clicks
+  const surfaceOpenState = { feedback: false, changelog: false, roadmap: false };
+  function onSurfaceOpenChange(surface: "feedback" | "changelog" | "roadmap", open: boolean) {
+    surfaceOpenState[surface] = open;
+    const anyOpen = surfaceOpenState.feedback || surfaceOpenState.changelog || surfaceOpenState.roadmap;
+    launcher?.setSurfaceOpen(anyOpen);
+  }
+
+  handles.feedback = createFeedbackWidget(
+    config,
+    position,
+    appUrl,
+    () => closeOthers("feedback"),
+    (open) => onSurfaceOpenChange("feedback", open)
+  );
   handles.changelog = createChangelogWidget(
     config,
     position,
     appUrl,
     () => closeOthers("changelog"),
-    (count) => launcher?.setUnreadCount(count)
+    (count) => launcher?.setUnreadCount(count),
+    (open) => onSurfaceOpenChange("changelog", open)
   );
-  handles.roadmap = createRoadmapWidget(config, position, appUrl, () => closeOthers("roadmap"));
+  handles.roadmap = createRoadmapWidget(
+    config,
+    position,
+    appUrl,
+    () => closeOthers("roadmap"),
+    (open) => onSurfaceOpenChange("roadmap", open)
+  );
 
   // Collapse behind a single launcher — clicking it fans out the 3 surface buttons
   launcher = createLauncher(position);
