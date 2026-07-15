@@ -138,7 +138,8 @@ export function createFeedbackWidget(
   panel.querySelector(".fb-close")?.addEventListener("click", closePanel);
 
   document.addEventListener("click", (e) => {
-    if (state.open && !panel.contains(e.target as Node) && !btn.contains(e.target as Node)) {
+    const path = e.composedPath();
+    if (state.open && !path.includes(panel) && !path.includes(btn)) {
       closePanel();
     }
   });

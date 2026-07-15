@@ -136,7 +136,8 @@ export function createChangelogWidget(
   popup.querySelector(".fb-close")?.addEventListener("click", closePopup);
 
   document.addEventListener("click", (e) => {
-    if (isOpen && !popup.contains(e.target as Node) && !btn.contains(e.target as Node)) {
+    const path = e.composedPath();
+    if (isOpen && !path.includes(popup) && !path.includes(btn)) {
       closePopup();
     }
   });

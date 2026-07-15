@@ -74,6 +74,7 @@ export function createLauncher(position: "bottom-right" | "bottom-left") {
     },
     setSurfaceOpen(open: boolean) {
       surfaceOpen = open;
+      if (!open) dialOpen = false;
       render();
     },
     setUnreadCount(count: number) {
@@ -83,11 +84,6 @@ export function createLauncher(position: "bottom-right" | "bottom-left") {
       } else {
         badge.style.display = "none";
       }
-    },
-    close() {
-      dialOpen = false;
-      surfaceOpen = false;
-      render();
     },
   };
 }

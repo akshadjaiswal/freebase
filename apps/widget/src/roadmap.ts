@@ -67,7 +67,8 @@ export function createRoadmapWidget(
   panel.querySelector(".fb-close")?.addEventListener("click", closePanel);
 
   document.addEventListener("click", (e) => {
-    if (isOpen && !panel.contains(e.target as Node) && !btn.contains(e.target as Node)) {
+    const path = e.composedPath();
+    if (isOpen && !path.includes(panel) && !path.includes(btn)) {
       closePanel();
     }
   });
