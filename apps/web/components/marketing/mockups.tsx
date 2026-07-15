@@ -1,4 +1,4 @@
-import { ChevronUp, CheckCircle2, Clock, Circle } from "lucide-react";
+import { ChevronUp, MessageCircle } from "lucide-react";
 
 export function FeedbackBoardMockup() {
   const posts = [
@@ -136,17 +136,13 @@ export function WidgetMockup() {
           </div>
         </div>
       </div>
-      {/* Floating buttons */}
-      <div className="absolute bottom-4 right-4 flex flex-col gap-2 items-end">
-        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--accent)] shadow-lg">
-          <CheckCircle2 className="h-4 w-4 text-[var(--accent-foreground)]" />
-        </div>
-        <div className="relative flex h-9 w-9 items-center justify-center rounded-full bg-[var(--surface-overlay)] border border-[var(--border)]">
-          <Circle className="h-4 w-4 text-[var(--text-secondary)]" />
-          <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--accent)] text-[8px] font-bold text-[var(--accent-foreground)]">3</span>
-        </div>
-        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--surface-overlay)] border border-[var(--border)]">
-          <Clock className="h-4 w-4 text-[var(--text-secondary)]" />
+      {/* Collapsed launcher — single button that fans out into a menu on click */}
+      <div className="absolute bottom-4 left-4 flex flex-col gap-2 items-start">
+        <div className="flex h-8 w-8 scale-90 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--surface-overlay)] opacity-40" />
+        <div className="flex h-8 w-8 scale-95 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--surface-overlay)] opacity-60" />
+        <div className="relative flex h-9 w-9 items-center justify-center rounded-full bg-[var(--accent)] shadow-lg">
+          <MessageCircle className="h-4 w-4 text-[var(--accent-foreground)]" />
+          <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full border-2 border-[var(--surface)] bg-[var(--error)] text-[8px] font-bold text-white">3</span>
         </div>
       </div>
     </div>
