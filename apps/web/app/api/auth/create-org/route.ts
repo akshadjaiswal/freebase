@@ -6,8 +6,11 @@ import { prisma } from "@/lib/prisma";
 import { errors, ok } from "@/lib/api";
 import { logger } from "@/lib/logger";
 import { getCreateOrgRateLimiter, getClientIp } from "@/lib/rate-limit";
+import { createClient as createServerClient } from "@/lib/supabase/server";
 
-const schema = z.object({
+const MAX_ORGS_PER_ACCOUNT = 5;
+
+const signupSchema = z.object({
   orgName: z.string().min(1).max(100),
   slug: z
     .string()
@@ -16,6 +19,15 @@ const schema = z.object({
     .regex(/^[a-z0-9-]+$/, "Slug may only contain lowercase letters, numbers, and hyphens."),
   email: z.string().email(),
   password: z.string().min(8).max(128),
+});
+
+const addOrgSchema = z.object({
+  orgName: z.string().min(1).max(100),
+  slug: z
+    .string()
+    .min(3)
+    .max(48)
+    .regex(/^[a-z0-9-]+$/, "Slug may only contain lowercase letters, numbers, and hyphens."),
 });
 
 export async function POST(request: NextRequest) {
@@ -28,11 +40,6 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  );
   let body: unknown;
   try {
     body = await request.json();
@@ -40,7 +47,63 @@ export async function POST(request: NextRequest) {
     return errors.badRequest("Request body must be valid JSON.");
   }
 
-  const parsed = schema.safeParse(body);
+  // Authenticated users add another org to their existing account — no Supabase user created
+  const supabase = await createServerClient();
+  const { data: { user: existingUser } } = await supabase.auth.getUser();
+
+  if (existingUser) {
+    const parsed = addOrgSchema.safeParse(body);
+    if (!parsed.success) {
+      const fieldErrors = parsed.error.issues.map((issue) => ({
+        field: issue.path.join("."),
+        message: issue.message,
+      }));
+      return errors.badRequest("Request body failed validation.", fieldErrors);
+    }
+
+    const { orgName, slug } = parsed.data;
+
+    const membershipCount = await prisma.orgMember.count({ where: { userId: existingUser.id } });
+    if (membershipCount >= MAX_ORGS_PER_ACCOUNT) {
+      return errors.badRequest(`You can belong to at most ${MAX_ORGS_PER_ACCOUNT} organizations.`);
+    }
+
+    const existingOrg = await prisma.organization.findUnique({ where: { slug } });
+    if (existingOrg) {
+      return errors.conflict(`The slug "${slug}" is already taken. Please choose another.`);
+    }
+
+    try {
+      const org = await prisma.organization.create({
+        data: {
+          slug,
+          name: orgName,
+          secretKey: randomBytes(32).toString("hex"),
+          members: {
+            create: { userId: existingUser.id, role: "admin" },
+          },
+        },
+      });
+
+      await prisma.category.create({
+        data: { orgId: org.id, name: "General", color: "#6366f1" },
+      });
+
+      return ok({ orgSlug: org.slug }, 201);
+    } catch (err) {
+      logger.error("DB error while adding org to existing account", { error: err instanceof Error ? err.message : String(err) });
+      return errors.internal();
+    }
+  }
+
+  // Signed-out visitor — full signup flow (create Supabase user + org together)
+  const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  );
+
+  const parsed = signupSchema.safeParse(body);
   if (!parsed.success) {
     const fieldErrors = parsed.error.issues.map((issue) => ({
       field: issue.path.join("."),
@@ -80,11 +143,15 @@ export async function POST(request: NextRequest) {
         slug,
         name: orgName,
         secretKey: randomBytes(32).toString("hex"), // HMAC key for widget JWT
-        users: {
+        members: {
           create: {
-            id: authData.user.id, // must match Supabase Auth UID exactly
-            email,
             role: "admin",
+            user: {
+              create: {
+                id: authData.user.id, // must match Supabase Auth UID exactly
+                email,
+              },
+            },
           },
         },
       },
