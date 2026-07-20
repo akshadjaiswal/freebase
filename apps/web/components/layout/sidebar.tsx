@@ -10,18 +10,39 @@ import {
   LogOut,
   Loader2,
   HelpCircle,
+  ChevronsUpDown,
+  Check,
+  Plus,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Logo } from "@/components/ui/logo";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { CreateOrgDialog } from "@/components/layout/create-org-dialog";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+
+const MAX_ORGS_PER_ACCOUNT = 5;
+
+interface Membership {
+  slug: string;
+  name: string;
+}
 
 interface SidebarProps {
   orgSlug: string;
   orgName: string;
   userEmail: string;
+  memberships: Membership[];
 }
 
 const navItems = [
@@ -30,11 +51,13 @@ const navItems = [
   { href: "admin/roadmap", label: "Roadmap", icon: Map },
 ];
 
-export function Sidebar({ orgSlug, orgName, userEmail }: SidebarProps) {
+export function Sidebar({ orgSlug, orgName, userEmail, memberships }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const base = `/${orgSlug}`;
   const [signingOut, setSigningOut] = useState(false);
+  const [createOrgOpen, setCreateOrgOpen] = useState(false);
+  const atOrgLimit = memberships.length >= MAX_ORGS_PER_ACCOUNT;
 
   async function handleSignout() {
     setSigningOut(true);
@@ -56,13 +79,55 @@ export function Sidebar({ orgSlug, orgName, userEmail }: SidebarProps) {
       className="flex h-screen w-[var(--sidebar-width)] flex-col border-r border-[var(--border)] bg-[var(--surface)]"
       style={{ position: "sticky", top: 0 }}
     >
-      {/* Logo + org name */}
-      <div className="flex h-14 items-center gap-2.5 border-b border-[var(--border)] px-4">
-        <Logo size={18} />
-        <span className="text-sm font-semibold text-[var(--text-primary)] truncate">
-          {orgName}
-        </span>
-      </div>
+      {/* Org switcher */}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button className="flex h-14 w-full items-center gap-2.5 border-b border-[var(--border)] px-4 text-left transition-colors hover:bg-[var(--surface-raised)]">
+            <Logo size={18} />
+            <span className="flex-1 truncate text-sm font-semibold text-[var(--text-primary)]">
+              {orgName}
+            </span>
+            <ChevronsUpDown className="h-3.5 w-3.5 shrink-0 text-[var(--text-muted)]" />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="w-56">
+          <DropdownMenuLabel>Organizations</DropdownMenuLabel>
+          {memberships.map((m) => (
+            <DropdownMenuItem
+              key={m.slug}
+              onSelect={() => {
+                if (m.slug !== orgSlug) {
+                  router.push(`/${m.slug}/admin/feedback`);
+                  router.refresh();
+                }
+              }}
+              className="justify-between"
+            >
+              <span className="truncate">{m.name}</span>
+              {m.slug === orgSlug && <Check className="h-3.5 w-3.5 shrink-0 text-[var(--accent)]" />}
+            </DropdownMenuItem>
+          ))}
+          <DropdownMenuSeparator />
+          {atOrgLimit ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div>
+                  <DropdownMenuItem disabled className="gap-2">
+                    <Plus className="h-3.5 w-3.5" />
+                    New organization
+                  </DropdownMenuItem>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>5 organization limit reached</TooltipContent>
+            </Tooltip>
+          ) : (
+            <DropdownMenuItem className="gap-2" onSelect={() => setCreateOrgOpen(true)}>
+              <Plus className="h-3.5 w-3.5" />
+              New organization
+            </DropdownMenuItem>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
 
       {/* Navigation */}
       <nav className="flex-1 px-2 py-3 space-y-0.5">
@@ -145,6 +210,8 @@ export function Sidebar({ orgSlug, orgName, userEmail }: SidebarProps) {
           </button>
         </div>
       </div>
+
+      <CreateOrgDialog open={createOrgOpen} onClose={() => setCreateOrgOpen(false)} />
     </aside>
   );
 }

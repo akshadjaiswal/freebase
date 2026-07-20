@@ -11,6 +11,8 @@ import { Logo } from "@/components/ui/logo";
 import { LogoLoader } from "@/components/ui/logo-loader";
 import { Loader2 } from "lucide-react";
 
+type OrgOption = { slug: string; name: string };
+
 function LoginForm() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -22,13 +24,17 @@ function LoginForm() {
   const orgSlug = searchParams.get("org");
   const next = searchParams.get("next") ?? (orgSlug ? `/${orgSlug}/admin` : "/");
   const [checking, setChecking] = useState(true);
+  const [orgChoices, setOrgChoices] = useState<OrgOption[] | null>(null);
 
   useEffect(() => {
     fetch("/api/auth/me")
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
-        if (data?.orgSlug) {
-          router.replace(`/${data.orgSlug}/admin`);
+        if (data?.orgs?.length === 1) {
+          router.replace(`/${data.orgs[0].slug}/admin`);
+        } else if (data?.orgs?.length > 1) {
+          setOrgChoices(data.orgs);
+          setChecking(false);
         } else {
           setChecking(false);
         }
@@ -52,14 +58,20 @@ function LoginForm() {
         return;
       }
 
-      // If no explicit next destination, look up the user's org and go to admin
+      // If no explicit next destination, look up the user's org(s)
       if (next === "/") {
         const res = await fetch("/api/auth/me");
         if (res.ok) {
           const data = await res.json();
-          router.push(`/${data.orgSlug}/admin`);
-          router.refresh();
-          return;
+          if (data.orgs?.length === 1) {
+            router.push(`/${data.orgs[0].slug}/admin`);
+            router.refresh();
+            return;
+          }
+          if (data.orgs?.length > 1) {
+            setOrgChoices(data.orgs);
+            return;
+          }
         }
       }
 
@@ -70,6 +82,35 @@ function LoginForm() {
 
   if (checking) {
     return <LogoLoader size={40} />;
+  }
+
+  if (orgChoices) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[var(--background)] px-4">
+        <div className="w-full max-w-sm">
+          <div className="mb-8 flex flex-col items-center gap-3">
+            <Logo size={36} />
+            <h1 className="text-lg font-semibold text-[var(--text-primary)]">
+              Choose an organization
+            </h1>
+          </div>
+          <div className="space-y-2">
+            {orgChoices.map((org) => (
+              <button
+                key={org.slug}
+                onClick={() => {
+                  router.push(`/${org.slug}/admin`);
+                  router.refresh();
+                }}
+                className="w-full rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-left text-sm font-medium text-[var(--text-primary)] transition-colors hover:border-[var(--accent)]"
+              >
+                {org.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (

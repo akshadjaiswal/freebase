@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { ThemeProvider } from "next-themes";
-import { verifyAdminAccess } from "@/lib/auth";
+import { verifyAdminAccess, getUserMemberships } from "@/lib/auth";
 import { Sidebar } from "@/components/layout/sidebar";
 import { CommandPalette } from "@/components/layout/command-palette";
 
@@ -17,6 +17,8 @@ export default async function AdminLayout({ children, params }: AdminLayoutProps
     redirect(`/login?org=${orgSlug}`);
   }
 
+  const memberships = await getUserMemberships(session.user.id);
+
   return (
     <ThemeProvider
       attribute="class"
@@ -29,6 +31,7 @@ export default async function AdminLayout({ children, params }: AdminLayoutProps
           orgSlug={orgSlug}
           orgName={session.org.name}
           userEmail={session.dbUser.email}
+          memberships={memberships.map((m) => ({ slug: m.org.slug, name: m.org.name }))}
         />
         <main className="flex-1 overflow-y-auto">
           {children}
