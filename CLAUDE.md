@@ -12,6 +12,7 @@ This file is the primary context for building Freebase. Read it at the start of 
 - [x] Phase 4 — Roadmap (kanban, admin promote/drag, public view)
 - [x] Phase 5 — Embeddable widget (Vite bundle, 3 surfaces, JWT identify)
 - [x] Phase 6 — API keys, webhooks, settings, command palette, Docker Compose, README
+- [x] Phase 7 — Multi-org accounts (one login, up to 5 organizations, org switcher)
 
 ---
 
@@ -216,6 +217,17 @@ SDK boots → drains the `.q` queue → replaces the stub.
 - `comment.created` → `posts/[id]/comments/route.ts` POST
 - `changelog.published` → `changelog/[slug]/route.ts` PATCH (when status flips draft→published)
 
+### Phase 7 — Multi-Org Accounts
+- `packages/db/prisma/schema.prisma` — `User` no longer holds `orgId`/`role`; new `OrgMember` join table (`userId`, `orgId`, `role`, `@@unique([userId, orgId])`) links a Supabase Auth user to N organizations. `Organization.members OrgMember[]` replaces the old `users User[]` relation.
+- `apps/web/lib/auth.ts` — `verifyAdminAccess(orgSlug)` now resolves via `prisma.orgMember.findFirst({ where: { userId, org: { slug: orgSlug } } })` instead of a singular `user.org` lookup; same return shape (`{ user, dbUser, org, role }`) so every existing caller was unaffected. New `getUserMemberships(userId)` — all orgs a user belongs to, used by the login picker and sidebar switcher.
+- `apps/web/app/api/auth/me/route.ts` — returns `{ orgs: [{ slug, name }] }` (array, not a single `orgSlug`) so the login page can decide auto-redirect (1 org) vs picker (2+).
+- `apps/web/app/(auth)/login/page.tsx` — renders an inline "Choose an organization" list when the account has 2+ memberships; unchanged single-redirect behavior when it has exactly 1.
+- `apps/web/app/api/auth/create-org/route.ts` — branches on whether a Supabase session already exists. Signed-out → original full signup flow (creates Supabase user + `Organization` + `User` + `OrgMember` together). Already signed-in → skips Supabase user creation, just adds a new `Organization` + `OrgMember` to the existing account. **Hard cap of 5 organizations per account, enforced server-side** (`prisma.orgMember.count(...)`, returns 400 past the limit) — never trust the client-disabled UI state alone.
+- `apps/web/components/layout/sidebar.tsx` — org header converted from a static row into a `DropdownMenu` switcher: lists all memberships (checkmark on active org), "+ New organization" (disabled + tooltip at the 5-org limit) opens `CreateOrgDialog`. Switching orgs is a full page navigation to `/{slug}/admin/feedback` — no client-side data merging, each org's data stays fully isolated per-request via the existing `orgId` scoping.
+- `apps/web/components/layout/create-org-dialog.tsx` — lightweight add-org dialog (name + auto-slugify) for already-authenticated users, distinct from the full `/new` signup page which still handles the signed-out case unchanged.
+- Widget (`apps/widget/*`, `/api/widget/[org]/*`) required **zero changes** — already fully org-slug + per-org-`secretKey` scoped, independent of the dashboard `User` model.
+- Existing users migrated via a backfill in the `org_members` migration (one `OrgMember` row created per existing `users.orgId`/`role` before those columns were dropped) — zero action needed from existing accounts, same org access preserved exactly.
+
 ### dnd-kit packages (Phase 4)
 - `@dnd-kit/core @dnd-kit/sortable @dnd-kit/utilities`
 - Drag within column: `SortableContext` + `useSortable` + `CSS.Transform`
@@ -274,22 +286,24 @@ Seed script: `packages/db/prisma/seed.ts` — creates 4 categories, 8 feedback p
 ## Auth Notes
 
 - **Supabase Auth only** — `users` table in Neon has `id = Supabase Auth UID`
+- **Multi-org (Phase 7)**: one Supabase Auth user can belong to up to 5 organizations via the `org_members` join table (`userId`, `orgId`, `role`). `User` itself carries no org — org membership is always resolved per-request against the URL's `orgSlug`, never cached globally.
 - Admin access check: `verifyAdminAccess(orgSlug)` in `lib/auth.ts`
   - Wrapped with `React.cache()` — layout + page both call it, only one DB hit per render
-  - Verifies Supabase session → looks up user in Neon → checks org.slug matches route
+  - Verifies Supabase session → looks up `OrgMember` matching `userId` + `org.slug` → returns `{ user, dbUser, org, role }`
+- All memberships for the switcher/picker: `getUserMemberships(userId)` in `lib/auth.ts`
 - API key check: `verifyApiKey(authHeader, orgSlug)` in `lib/auth.ts`
-  - SHA-256 hashes incoming key → looks up in `api_keys` table → checks org match
+  - SHA-256 hashes incoming key → looks up in `api_keys` table → checks org match (unaffected by multi-org — API keys are always org-scoped, never account-scoped)
 - Widget JWT: `verifyWidgetJwt(token, secretKey)` in `lib/jwt.ts`
   - HMAC-SHA256 signed by host app using org's `secretKey`
 
 ### Login redirect — two-layer approach
 
-Logged-in users visiting `/login`, `/`, or `/new` are redirected to `/{org}/admin` via two mechanisms:
+Logged-in users visiting `/login`, `/`, or `/new` are redirected via two mechanisms:
 
-1. **Middleware (fast path)** — checks `user?.user_metadata?.orgSlug`. Works for users created after `create-org` started writing this metadata. Fires at the Edge before the page renders.
-2. **Client-side `useEffect` (reliable fallback)** — login page calls `/api/auth/me` on mount; if response includes `orgSlug`, calls `router.replace`. Works for ALL users regardless of when they registered. Shows a spinner while the check is in flight.
+1. **Middleware (fast path)** — checks `user?.user_metadata?.orgSlug`. This is a **redirect hint only, never load-bearing for authz** — `user_metadata` is client-writable and Supabase docs explicitly warn against trusting it for access control. Actual authorization always re-verifies against the DB in `verifyAdminAccess`. Fires at the Edge before the page renders.
+2. **Client-side `useEffect` (reliable fallback)** — login page calls `/api/auth/me` on mount, which returns `{ orgs: [...] }`. Exactly 1 org → `router.replace` straight to `/{org}/admin` (same UX as before multi-org). 2+ orgs → renders an inline "Choose an organization" picker instead of guessing. Shows a spinner while the check is in flight.
 
-`create-org` route now writes `user_metadata: { orgSlug }` when creating Supabase users so new users also get the fast middleware path.
+`create-org` route writes `user_metadata: { orgSlug }` on signup so brand-new (still single-org) users get the fast middleware path; it's never updated to reflect a "last active" org on switch, so multi-org accounts simply fall through to the picker every login — acceptable since the picker click is a single extra tap.
 
 ---
 
@@ -439,6 +453,7 @@ All decisions are locked in `/research/`:
 - [x] Sidebar: Help/Docs link (HelpCircle icon) above ⌘K bar
 - [x] Pre-deployment security fixes: vote DELETE rate limiting, comment DELETE revalidateTag cache invalidation, roadmap GET auth fixed to use verifyAdminOrApiKey (API keys now work), NEXT_PUBLIC_APP_URL required (no localhost default — fails fast on misconfigured deploy)
 - [x] Widget: 3 independent floating buttons (feedback/changelog/roadmap) collapsed into a single launcher (`apps/widget/src/launcher.ts`) that fans out a speed-dial menu on click — fixes excessive screen space usage, especially on mobile. Unread badge (changelog only) now shown on both the collapsed launcher and the changelog dial-item icon. `@media (max-width: 480px)` turns `.fb-window` into a full-screen bottom sheet. Gotcha fixed during implementation: outside-click-to-close must use `e.composedPath()` snapshot, not live `.contains()` checks — the launcher's `innerHTML` icon swap on click detaches the click's own target node mid-bubble, so a live `.contains()` check misreads the click as "outside" and immediately re-closes the dial it just opened. Same fix applied to feedback.ts, changelog.ts, and roadmap.ts's outside-click listeners for consistency — all 4 widget surfaces now use `composedPath()`, not just the launcher. Also fixed: closing a surface panel that was opened from the dial now resets the dial's own open state too (`setSurfaceOpen(false)` clears `dialOpen`), so the launcher collapses back down instead of staying stuck visually fanned-out with nothing open.
+- [x] Multi-org accounts (Phase 7): one Supabase Auth account can now own up to 5 organizations via the `org_members` join table, switchable from a sidebar dropdown with zero re-login. Existing users backfilled with zero disruption (verified in prod DB — both pre-existing accounts kept identical single-org access after migration). Widget required zero changes since it was already org-slug + per-org-secretKey scoped, independent of the dashboard `User` model. 5-org cap enforced server-side in `create-org` route (400 response), not just via disabled UI — verified by calling the API directly past the UI gate. Full end-to-end browser verification done: switcher, create-org dialog, data isolation between orgs, login picker for 2+ orgs, and the limit itself.
 
 ## Prisma Client Note (pnpm monorepo)
 
