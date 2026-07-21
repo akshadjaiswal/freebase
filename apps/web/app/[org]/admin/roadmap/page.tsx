@@ -33,6 +33,7 @@ export default async function AdminRoadmapPage({ params }: Props) {
 
   return (
     <AdminRoadmapClient
+      key={orgSlug}
       orgSlug={orgSlug}
       initialData={initialData}
       feedbackPosts={feedbackPosts}

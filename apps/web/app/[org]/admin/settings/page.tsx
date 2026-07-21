@@ -25,6 +25,7 @@ export default async function AdminSettingsPage({ params }: Props) {
       </div>
 
       <SettingsClient
+        key={orgSlug}
         org={{
           id: session.org.id,
           name: session.org.name,

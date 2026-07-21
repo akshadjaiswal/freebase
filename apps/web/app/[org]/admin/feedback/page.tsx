@@ -17,6 +17,7 @@ export default async function AdminFeedbackPage({ params }: Props) {
 
   return (
     <AdminFeedbackClient
+      key={orgSlug}
       orgSlug={orgSlug}
       initialPosts={posts.map((p: FeedbackPostRow) => ({
         id: p.id,
