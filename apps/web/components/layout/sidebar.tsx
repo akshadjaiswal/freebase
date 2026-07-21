@@ -28,8 +28,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { CreateOrgDialog } from "@/components/layout/create-org-dialog";
-import { useState } from "react";
+import { createClient } from "@/lib/supabase/client";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+
+// Best-effort, non-blocking — remembers the active org for next login's auto-redirect
+function rememberOrg(slug: string) {
+  createClient().auth.updateUser({ data: { orgSlug: slug } }).catch(() => {});
+}
 
 const MAX_ORGS_PER_ACCOUNT = 5;
 
@@ -57,7 +63,21 @@ export function Sidebar({ orgSlug, orgName, userEmail, memberships }: SidebarPro
   const base = `/${orgSlug}`;
   const [signingOut, setSigningOut] = useState(false);
   const [createOrgOpen, setCreateOrgOpen] = useState(false);
+  const [switchingTo, setSwitchingTo] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
   const atOrgLimit = memberships.length >= MAX_ORGS_PER_ACCOUNT;
+
+  function handleSwitchOrg(targetSlug: string) {
+    if (targetSlug === orgSlug) return;
+    setSwitchingTo(targetSlug);
+    rememberOrg(targetSlug);
+    // Preserve the current subpath (e.g. stay on /admin/settings) rather than always bouncing to feedback
+    const subpath = pathname.slice(base.length) || "/admin/feedback";
+    startTransition(() => {
+      router.push(`/${targetSlug}${subpath}`);
+      router.refresh();
+    });
+  }
 
   async function handleSignout() {
     setSigningOut(true);
@@ -81,13 +101,20 @@ export function Sidebar({ orgSlug, orgName, userEmail, memberships }: SidebarPro
     >
       {/* Org switcher */}
       <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <button className="flex h-14 w-full items-center gap-2.5 border-b border-[var(--border)] px-4 text-left transition-colors hover:bg-[var(--surface-raised)]">
+        <DropdownMenuTrigger asChild disabled={isPending}>
+          <button
+            disabled={isPending}
+            className="flex h-14 w-full items-center gap-2.5 border-b border-[var(--border)] px-4 text-left transition-colors hover:bg-[var(--surface-raised)] disabled:opacity-70 outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-[var(--accent)]"
+          >
             <Logo size={18} />
             <span className="flex-1 truncate text-sm font-semibold text-[var(--text-primary)]">
               {orgName}
             </span>
-            <ChevronsUpDown className="h-3.5 w-3.5 shrink-0 text-[var(--text-muted)]" />
+            {isPending ? (
+              <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-[var(--text-muted)]" />
+            ) : (
+              <ChevronsUpDown className="h-3.5 w-3.5 shrink-0 text-[var(--text-muted)]" />
+            )}
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" className="w-56">
@@ -95,16 +122,16 @@ export function Sidebar({ orgSlug, orgName, userEmail, memberships }: SidebarPro
           {memberships.map((m) => (
             <DropdownMenuItem
               key={m.slug}
-              onSelect={() => {
-                if (m.slug !== orgSlug) {
-                  router.push(`/${m.slug}/admin/feedback`);
-                  router.refresh();
-                }
-              }}
+              onSelect={() => handleSwitchOrg(m.slug)}
+              disabled={isPending}
               className="justify-between"
             >
               <span className="truncate">{m.name}</span>
-              {m.slug === orgSlug && <Check className="h-3.5 w-3.5 shrink-0 text-[var(--accent)]" />}
+              {isPending && switchingTo === m.slug ? (
+                <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-[var(--text-muted)]" />
+              ) : (
+                m.slug === orgSlug && <Check className="h-3.5 w-3.5 shrink-0 text-[var(--accent)]" />
+              )}
             </DropdownMenuItem>
           ))}
           <DropdownMenuSeparator />

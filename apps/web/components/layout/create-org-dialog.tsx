@@ -6,6 +6,7 @@ import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { createClient } from "@/lib/supabase/client";
 import {
   Dialog,
   DialogContent,
@@ -13,6 +14,11 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+
+// Best-effort, non-blocking — remembers the active org for next login's auto-redirect
+function rememberOrg(slug: string) {
+  createClient().auth.updateUser({ data: { orgSlug: slug } }).catch(() => {});
+}
 
 const APP_HOST = (process.env.NEXT_PUBLIC_APP_URL ?? "https://freebase.app").replace(/^https?:\/\//, "");
 
@@ -88,7 +94,8 @@ export function CreateOrgDialog({ open, onClose }: CreateOrgDialogProps) {
 
       reset();
       onClose();
-      router.push(`/${slug}/admin`);
+      rememberOrg(slug);
+      router.push(`/${slug}/admin/feedback`);
       router.refresh();
     });
   }

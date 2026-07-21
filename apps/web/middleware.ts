@@ -64,7 +64,7 @@ export async function middleware(request: NextRequest) {
     const { supabaseResponse, user } = await updateSession(request);
     const orgSlug = user?.user_metadata?.orgSlug as string | undefined;
     if (orgSlug) {
-      return NextResponse.redirect(new URL(`/${orgSlug}/admin`, request.url));
+      return NextResponse.redirect(new URL(`/${orgSlug}/admin/feedback`, request.url));
     }
     return supabaseResponse;
   }
@@ -74,7 +74,7 @@ export async function middleware(request: NextRequest) {
     const { supabaseResponse, user } = await updateSession(request);
     const orgSlug = user?.user_metadata?.orgSlug as string | undefined;
     if (orgSlug) {
-      return NextResponse.redirect(new URL(`/${orgSlug}/admin`, request.url));
+      return NextResponse.redirect(new URL(`/${orgSlug}/admin/feedback`, request.url));
     }
     return supabaseResponse;
   }

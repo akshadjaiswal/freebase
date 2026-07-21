@@ -17,5 +17,6 @@ export async function GET() {
 
   return NextResponse.json({
     orgs: memberships.map((m) => ({ slug: m.org.slug, name: m.org.name })),
+    lastOrgSlug: (user.user_metadata?.orgSlug as string | undefined) ?? null,
   });
 }

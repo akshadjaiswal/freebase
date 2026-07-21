@@ -12,6 +12,22 @@ import { LogoLoader } from "@/components/ui/logo-loader";
 import { Loader2 } from "lucide-react";
 
 type OrgOption = { slug: string; name: string };
+type MeResponse = { orgs: OrgOption[]; lastOrgSlug: string | null };
+
+// Best-effort, non-blocking — remembers the active org for next login's auto-redirect
+function rememberOrg(slug: string) {
+  createClient().auth.updateUser({ data: { orgSlug: slug } }).catch(() => {});
+}
+
+// Pick the org to land on: prefer the last-active org if it's still a valid membership
+function pickLandingOrg(data: MeResponse): OrgOption | null {
+  if (data.orgs.length === 0) return null;
+  if (data.lastOrgSlug) {
+    const match = data.orgs.find((o) => o.slug === data.lastOrgSlug);
+    if (match) return match;
+  }
+  return data.orgs.length === 1 ? data.orgs[0] : null;
+}
 
 function LoginForm() {
   const searchParams = useSearchParams();
@@ -20,19 +36,23 @@ function LoginForm() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isPending, startTransition] = useTransition();
+  const [switchingTo, setSwitchingTo] = useState<string | null>(null);
 
   const orgSlug = searchParams.get("org");
-  const next = searchParams.get("next") ?? (orgSlug ? `/${orgSlug}/admin` : "/");
+  const next = searchParams.get("next") ?? (orgSlug ? `/${orgSlug}/admin/feedback` : "/");
   const [checking, setChecking] = useState(true);
   const [orgChoices, setOrgChoices] = useState<OrgOption[] | null>(null);
 
   useEffect(() => {
     fetch("/api/auth/me")
       .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (data?.orgs?.length === 1) {
-          router.replace(`/${data.orgs[0].slug}/admin`);
-        } else if (data?.orgs?.length > 1) {
+      .then((data: MeResponse | null) => {
+        if (!data) return setChecking(false);
+        const landing = pickLandingOrg(data);
+        if (landing) {
+          rememberOrg(landing.slug);
+          router.replace(`/${landing.slug}/admin/feedback`);
+        } else if (data.orgs.length > 1) {
           setOrgChoices(data.orgs);
           setChecking(false);
         } else {
@@ -41,6 +61,13 @@ function LoginForm() {
       })
       .catch(() => setChecking(false));
   }, [router]);
+
+  function goToOrg(slug: string) {
+    setSwitchingTo(slug);
+    rememberOrg(slug);
+    router.push(`/${slug}/admin/feedback`);
+    router.refresh();
+  }
 
   function handleLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -62,13 +89,15 @@ function LoginForm() {
       if (next === "/") {
         const res = await fetch("/api/auth/me");
         if (res.ok) {
-          const data = await res.json();
-          if (data.orgs?.length === 1) {
-            router.push(`/${data.orgs[0].slug}/admin`);
+          const data: MeResponse = await res.json();
+          const landing = pickLandingOrg(data);
+          if (landing) {
+            rememberOrg(landing.slug);
+            router.push(`/${landing.slug}/admin/feedback`);
             router.refresh();
             return;
           }
-          if (data.orgs?.length > 1) {
+          if (data.orgs.length > 1) {
             setOrgChoices(data.orgs);
             return;
           }
@@ -98,13 +127,12 @@ function LoginForm() {
             {orgChoices.map((org) => (
               <button
                 key={org.slug}
-                onClick={() => {
-                  router.push(`/${org.slug}/admin`);
-                  router.refresh();
-                }}
-                className="w-full rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-left text-sm font-medium text-[var(--text-primary)] transition-colors hover:border-[var(--accent)]"
+                onClick={() => goToOrg(org.slug)}
+                disabled={switchingTo !== null}
+                className="flex w-full items-center justify-between rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-left text-sm font-medium text-[var(--text-primary)] transition-colors hover:border-[var(--accent)] disabled:opacity-60"
               >
                 {org.name}
+                {switchingTo === org.slug && <Loader2 className="h-3.5 w-3.5 animate-spin text-[var(--text-muted)]" />}
               </button>
             ))}
           </div>
