@@ -17,6 +17,7 @@ Collect feedback, publish changelogs, and showcase your roadmap. Drop one `<scri
 | **REST API** | Full REST API with API key auth. Use it to integrate with your own tools. |
 | **Webhooks** | HMAC-signed outbound webhooks for `post.created`, `post.status_changed`, `comment.created`, `changelog.published`. |
 | **Command palette** | `⌘K` from anywhere in the admin to jump between sections. |
+| **Multi-org accounts** | One login, up to 5 organizations. Switch instantly from the sidebar — each org has fully isolated data and its own widget secret key. |
 
 ---
 
@@ -83,6 +84,16 @@ const token = jwt.sign(
   { expiresIn: '1h' }
 );
 ```
+
+---
+
+## Multi-org accounts
+
+One login can own and switch between up to 5 organizations — each with its own feedback board, changelog, roadmap, and widget secret key, fully isolated from the others.
+
+- **Switch instantly** from the org name dropdown at the top of the sidebar — no re-login, no page reload of the surrounding shell.
+- **Add another org** via "+ New organization" in the same dropdown (disabled once you hit the 5-org limit).
+- **Auto-lands on your last-active org** on login — the picker only shows up if there's no remembered org yet (first login, or you were removed from the last one).
 
 ---
 

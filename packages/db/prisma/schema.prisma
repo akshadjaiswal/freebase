@@ -20,7 +20,7 @@ model Organization {
   customDomain String? @unique
   createdAt    DateTime @default(now())
 
-  users                User[]
+  members              OrgMember[]
   feedbackPosts        FeedbackPost[]
   categories           Category[]
   changelogPosts       ChangelogPost[]
@@ -34,14 +34,27 @@ model Organization {
 
 model User {
   id        String   @id // Supabase Auth UID — must match exactly
-  orgId     String
   email     String
+  createdAt DateTime @default(now())
+
+  memberships OrgMember[]
+
+  @@map("users")
+}
+
+model OrgMember {
+  id        String   @id @default(cuid())
+  userId    String
+  orgId     String
   role      String   @default("admin") // admin | member
   createdAt DateTime @default(now())
 
-  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  org  Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
 
-  @@map("users")
+  @@unique([userId, orgId])
+  @@index([orgId])
+  @@map("org_members")
 }
 
 model FeedbackPost {

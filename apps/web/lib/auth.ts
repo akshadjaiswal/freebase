@@ -10,14 +10,23 @@ export const verifyAdminAccess = cache(async function verifyAdminAccess(orgSlug:
 
   if (!user) return null;
 
-  const dbUser = await prisma.user.findFirst({
-    where: { id: user.id },
-    include: { org: true },
+  const membership = await prisma.orgMember.findFirst({
+    where: { userId: user.id, org: { slug: orgSlug } },
+    include: { org: true, user: true },
   });
 
-  if (!dbUser || dbUser.org.slug !== orgSlug) return null;
+  if (!membership) return null;
 
-  return { user, dbUser, org: dbUser.org };
+  return { user, dbUser: membership.user, org: membership.org, role: membership.role };
+});
+
+// All orgs the given Supabase Auth user belongs to — used by the login picker and org switcher
+export const getUserMemberships = cache(async function getUserMemberships(userId: string) {
+  return prisma.orgMember.findMany({
+    where: { userId },
+    include: { org: true },
+    orderBy: { createdAt: "asc" },
+  });
 });
 
 // Accepts admin session OR API key Bearer token — for all admin API routes.

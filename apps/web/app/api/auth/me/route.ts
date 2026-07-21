@@ -7,12 +7,16 @@ export async function GET() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const dbUser = await prisma.user.findUnique({
-    where: { id: user.id },
-    include: { org: { select: { slug: true } } },
+  const memberships = await prisma.orgMember.findMany({
+    where: { userId: user.id },
+    include: { org: { select: { slug: true, name: true } } },
+    orderBy: { createdAt: "asc" },
   });
 
-  if (!dbUser?.org) return NextResponse.json({ error: "Org not found" }, { status: 404 });
+  if (memberships.length === 0) return NextResponse.json({ error: "Org not found" }, { status: 404 });
 
-  return NextResponse.json({ orgSlug: dbUser.org.slug });
+  return NextResponse.json({
+    orgs: memberships.map((m) => ({ slug: m.org.slug, name: m.org.name })),
+    lastOrgSlug: (user.user_metadata?.orgSlug as string | undefined) ?? null,
+  });
 }
