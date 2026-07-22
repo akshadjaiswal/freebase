@@ -4,15 +4,12 @@ import { prisma } from "@/lib/prisma";
 import { errors, ok } from "@/lib/api";
 import { verifyWidgetJwt } from "@/lib/jwt";
 import { getWidgetIdentifyLimiter, getClientIp } from "@/lib/rate-limit";
+import { corsHeaders, checkOriginAllowed } from "@/lib/cors";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, X-Freebase-User",
-};
+const CORS_METHODS = "POST, OPTIONS";
 
-export async function OPTIONS() {
-  return new Response(null, { status: 204, headers: corsHeaders });
+export async function OPTIONS(request: NextRequest) {
+  return new Response(null, { status: 204, headers: corsHeaders(request, CORS_METHODS) });
 }
 
 const bodySchema = z.object({
@@ -39,9 +36,12 @@ export async function POST(
 
   const org = await prisma.organization.findUnique({
     where: { slug: orgSlug },
-    select: { id: true, secretKey: true },
+    select: { id: true, secretKey: true, allowedOrigins: true },
   });
   if (!org) return errors.notFound("Organization not found");
+
+  const originCheck = checkOriginAllowed(request, org.allowedOrigins);
+  if (!originCheck.allowed) return errors.forbidden("This origin is not authorized to access this organization's widget.");
 
   let body: unknown;
   try {
@@ -72,6 +72,6 @@ export async function POST(
       name: payload.name ?? null,
     },
     200,
-    corsHeaders
+    corsHeaders(request, CORS_METHODS)
   );
 }

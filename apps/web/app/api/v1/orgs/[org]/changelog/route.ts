@@ -4,15 +4,12 @@ import { revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { verifyAdminOrApiKey } from "@/lib/auth";
 import { errors, ok, encodeCursor, decodeCursor } from "@/lib/api";
+import { corsHeaders, checkOriginAllowed } from "@/lib/cors";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Freebase-User",
-};
+const CORS_METHODS = "GET, OPTIONS";
 
-export async function OPTIONS() {
-  return new Response(null, { status: 204, headers: corsHeaders });
+export async function OPTIONS(request: NextRequest) {
+  return new Response(null, { status: 204, headers: corsHeaders(request, CORS_METHODS) });
 }
 
 function tiptapToText(body: unknown): string {
@@ -47,6 +44,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ org:
 
   const org = await prisma.organization.findUnique({ where: { slug: orgSlug } });
   if (!org) return errors.notFound("Organization not found.");
+
+  const originCheck = checkOriginAllowed(req, org.allowedOrigins);
+  if (!originCheck.allowed) return errors.forbidden("This origin is not authorized to access this organization's widget.");
 
   const { searchParams } = req.nextUrl;
   const status = searchParams.get("status") ?? "published";
@@ -117,7 +117,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ org:
       excerpt: tiptapToText(p.body).slice(0, 200),
     })),
     pagination: { hasMore, nextCursor, total },
-  }, 200, corsHeaders);
+  }, 200, corsHeaders(req, CORS_METHODS));
 }
 
 const createSchema = z.object({

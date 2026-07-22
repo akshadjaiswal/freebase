@@ -5,15 +5,12 @@ import { prisma } from "@/lib/prisma";
 import { errors, ok } from "@/lib/api";
 import { verifyWidgetJwt } from "@/lib/jwt";
 import { getVoteLimiter, getClientIp } from "@/lib/rate-limit";
+import { corsHeaders, checkOriginAllowed } from "@/lib/cors";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, X-Freebase-User",
-};
+const CORS_METHODS = "POST, DELETE, OPTIONS";
 
-export async function OPTIONS() {
-  return new Response(null, { status: 204, headers: corsHeaders });
+export async function OPTIONS(request: NextRequest) {
+  return new Response(null, { status: 204, headers: corsHeaders(request, CORS_METHODS) });
 }
 
 function buildFingerprint(ip: string, ua: string, orgId: string): string {
@@ -41,9 +38,12 @@ export async function POST(
 
   const org = await prisma.organization.findUnique({
     where: { slug: orgSlug },
-    select: { id: true, secretKey: true },
+    select: { id: true, secretKey: true, allowedOrigins: true },
   });
   if (!org) return errors.notFound("Organization not found.");
+
+  const originCheck = checkOriginAllowed(request, org.allowedOrigins);
+  if (!originCheck.allowed) return errors.forbidden("This origin is not authorized to access this organization's widget.");
 
   const post = await prisma.feedbackPost.findFirst({
     where: { id: postId, orgId: org.id },
@@ -111,7 +111,7 @@ export async function POST(
     select: { voteCount: true },
   });
 
-  return ok({ votes: updated!.voteCount, voted: true }, 201, corsHeaders);
+  return ok({ votes: updated!.voteCount, voted: true }, 201, corsHeaders(request, CORS_METHODS));
 }
 
 export async function DELETE(
@@ -131,9 +131,12 @@ export async function DELETE(
 
   const org = await prisma.organization.findUnique({
     where: { slug: orgSlug },
-    select: { id: true, secretKey: true },
+    select: { id: true, secretKey: true, allowedOrigins: true },
   });
   if (!org) return errors.notFound("Organization not found.");
+
+  const originCheck = checkOriginAllowed(request, org.allowedOrigins);
+  if (!originCheck.allowed) return errors.forbidden("This origin is not authorized to access this organization's widget.");
 
   const post = await prisma.feedbackPost.findFirst({
     where: { id: postId, orgId: org.id },
@@ -193,5 +196,5 @@ export async function DELETE(
     select: { voteCount: true },
   });
 
-  return ok({ votes: Math.max(0, updated!.voteCount), voted: false }, 200, corsHeaders);
+  return ok({ votes: Math.max(0, updated!.voteCount), voted: false }, 200, corsHeaders(request, CORS_METHODS));
 }

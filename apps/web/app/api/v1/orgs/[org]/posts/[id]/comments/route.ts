@@ -5,15 +5,12 @@ import { errors, ok, encodeCursor, decodeCursor } from "@/lib/api";
 import { verifyAdminAccess } from "@/lib/auth";
 import { dispatchWebhook } from "@/lib/webhooks";
 import { getPostSubmitLimiter, getClientIp } from "@/lib/rate-limit";
+import { corsHeaders, checkOriginAllowed } from "@/lib/cors";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, X-Freebase-User",
-};
+const CORS_METHODS = "GET, POST, OPTIONS";
 
-export async function OPTIONS() {
-  return new Response(null, { status: 204, headers: corsHeaders });
+export async function OPTIONS(request: NextRequest) {
+  return new Response(null, { status: 204, headers: corsHeaders(request, CORS_METHODS) });
 }
 
 export async function GET(
@@ -28,9 +25,12 @@ export async function GET(
 
   const org = await prisma.organization.findUnique({
     where: { slug: orgSlug },
-    select: { id: true },
+    select: { id: true, allowedOrigins: true },
   });
   if (!org) return errors.notFound("Organization not found.");
+
+  const originCheck = checkOriginAllowed(request, org.allowedOrigins);
+  if (!originCheck.allowed) return errors.forbidden("This origin is not authorized to access this organization's widget.");
 
   const post = await prisma.feedbackPost.findFirst({
     where: { id: postId, orgId: org.id },
@@ -71,7 +71,7 @@ export async function GET(
       createdAt: c.createdAt,
     })),
     pagination: { hasMore, nextCursor, total },
-  }, 200, corsHeaders);
+  }, 200, corsHeaders(request, CORS_METHODS));
 }
 
 const createCommentSchema = z.object({
@@ -97,9 +97,12 @@ export async function POST(
 
   const org = await prisma.organization.findUnique({
     where: { slug: orgSlug },
-    select: { id: true },
+    select: { id: true, allowedOrigins: true },
   });
   if (!org) return errors.notFound("Organization not found.");
+
+  const originCheck = checkOriginAllowed(request, org.allowedOrigins);
+  if (!originCheck.allowed) return errors.forbidden("This origin is not authorized to access this organization's widget.");
 
   const post = await prisma.feedbackPost.findFirst({
     where: { id: postId, orgId: org.id },
@@ -144,5 +147,5 @@ export async function POST(
     data: { postId, comment: result },
   });
 
-  return ok(result, 201, corsHeaders);
+  return ok(result, 201, corsHeaders(request, CORS_METHODS));
 }
