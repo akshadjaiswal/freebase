@@ -20,6 +20,7 @@ export interface OrgSettings {
   slug: string;
   accentColor: string;
   secretKey: string;
+  allowedOrigins: string[];
 }
 
 export type ConfirmAction =
