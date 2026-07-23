@@ -226,6 +226,10 @@ const token = jwt.sign(
               Enter the full origin only &mdash; scheme + host, no path or trailing slash, e.g.{" "}
               <Code>https://yourapp.com</Code>, not <Code>yourapp.com</Code> or <Code>https://yourapp.com/</Code>.
             </P>
+            <P>
+              This setting only restricts third-party embeds. Your own public feedback, changelog, and roadmap
+              pages are always allowed and never need to be added to the list.
+            </P>
           </section>
 
           {/* API Keys */}

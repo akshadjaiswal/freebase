@@ -47,7 +47,7 @@ export function AllowedOriginsSection({
       <SectionHeader
         icon={ShieldAlert}
         title="Allowed Origins"
-        info={<FieldInfo text="Restricts which websites may embed your widget. Leave empty to allow any site (current default)." />}
+        info={<FieldInfo text="Restricts which third-party websites may embed your widget. Your own public pages are never affected. Leave empty to allow any site (current default)." />}
       />
       <div className="rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] p-4 space-y-3">
         {allowedOrigins.length === 0 ? (
@@ -100,6 +100,7 @@ export function AllowedOriginsSection({
         </div>
         <p className="text-xs text-[var(--text-muted)]">
           Full origin only, no path or trailing slash — e.g. <code className="font-mono">https://yourapp.com</code>, not <code className="font-mono">yourapp.com</code>.
+          This is for third-party sites embedding your widget — your own public feedback/changelog/roadmap pages are always allowed and never need to be added here.
         </p>
       </div>
     </section>
