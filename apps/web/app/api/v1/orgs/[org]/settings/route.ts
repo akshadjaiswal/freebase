@@ -12,6 +12,15 @@ const updateSchema = z.object({
   name: z.string().min(1).max(100).optional(),
   accentColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Must be a valid hex color.").optional(),
   regenerateSecret: z.boolean().optional(),
+  allowedOrigins: z
+    .array(
+      z
+        .string()
+        .url("Each origin must be a valid URL, e.g. https://example.com")
+        .refine((v) => !v.endsWith("/"), "Origin must not include a trailing slash")
+    )
+    .max(20, "Maximum 20 allowed origins.")
+    .optional(),
 });
 
 export async function GET(
@@ -28,6 +37,7 @@ export async function GET(
     slug: session.org.slug,
     accentColor: session.org.accentColor,
     secretKey: session.org.secretKey,
+    allowedOrigins: session.org.allowedOrigins,
   });
 }
 
@@ -48,9 +58,10 @@ export async function PATCH(
     })));
   }
 
-  const updateData: { name?: string; accentColor?: string; secretKey?: string } = {};
+  const updateData: { name?: string; accentColor?: string; secretKey?: string; allowedOrigins?: string[] } = {};
   if (parsed.data.name !== undefined) updateData.name = parsed.data.name;
   if (parsed.data.accentColor !== undefined) updateData.accentColor = parsed.data.accentColor;
+  if (parsed.data.allowedOrigins !== undefined) updateData.allowedOrigins = parsed.data.allowedOrigins;
   if (parsed.data.regenerateSecret) {
     updateData.secretKey = randomBytes(32).toString("hex");
   }
@@ -58,7 +69,7 @@ export async function PATCH(
   const updated = await prisma.organization.update({
     where: { id: session.org.id },
     data: updateData,
-    select: { id: true, name: true, slug: true, accentColor: true, secretKey: true },
+    select: { id: true, name: true, slug: true, accentColor: true, secretKey: true, allowedOrigins: true },
   });
 
   revalidateTag(`org-${session.org.id}`);

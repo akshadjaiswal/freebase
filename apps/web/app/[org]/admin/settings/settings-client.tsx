@@ -7,6 +7,7 @@ import { useWebhooks } from "./hooks/useWebhooks";
 import { useConfirmDialog } from "./hooks/useConfirmDialog";
 
 import { OrganizationSection } from "./components/OrganizationSection";
+import { AllowedOriginsSection } from "./components/AllowedOriginsSection";
 import { SecretKeySection } from "./components/SecretKeySection";
 import { ApiKeysList } from "./components/ApiKeysList";
 import { WebhooksList } from "./components/WebhooksList";
@@ -38,6 +39,15 @@ export function SettingsClient({ org: initialOrg, apiKeys: initialKeys, webhooks
         setOrgName={orgSettings.setOrgName}
         accentColor={orgSettings.accentColor}
         setAccentColor={orgSettings.setAccentColor}
+        savingOrg={orgSettings.savingOrg}
+        orgSaved={orgSettings.orgSaved}
+        onSave={orgSettings.saveOrgSettings}
+      />
+
+      <AllowedOriginsSection
+        allowedOrigins={orgSettings.allowedOrigins}
+        setAllowedOrigins={orgSettings.setAllowedOrigins}
+        savedAllowedOrigins={orgSettings.org.allowedOrigins}
         savingOrg={orgSettings.savingOrg}
         orgSaved={orgSettings.orgSaved}
         onSave={orgSettings.saveOrgSettings}

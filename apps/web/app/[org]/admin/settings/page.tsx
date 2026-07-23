@@ -32,6 +32,7 @@ export default async function AdminSettingsPage({ params }: Props) {
           slug: session.org.slug,
           accentColor: session.org.accentColor,
           secretKey: session.org.secretKey,
+          allowedOrigins: session.org.allowedOrigins,
         }}
         apiKeys={apiKeys.map((k: ApiKeyRow) => ({
           ...k,

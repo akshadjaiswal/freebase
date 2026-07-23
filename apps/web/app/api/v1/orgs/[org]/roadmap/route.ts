@@ -4,15 +4,12 @@ import { revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { errors, ok } from "@/lib/api";
 import { verifyAdminOrApiKey } from "@/lib/auth";
+import { corsHeaders, checkOriginAllowed } from "@/lib/cors";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Freebase-User",
-};
+const CORS_METHODS = "GET, OPTIONS";
 
-export async function OPTIONS() {
-  return new Response(null, { status: 204, headers: corsHeaders });
+export async function OPTIONS(request: NextRequest) {
+  return new Response(null, { status: 204, headers: corsHeaders(request, CORS_METHODS) });
 }
 
 // GET /api/v1/orgs/[org]/roadmap — grouped by status
@@ -26,9 +23,12 @@ export async function GET(
 
   const org = await prisma.organization.findUnique({
     where: { slug: orgSlug },
-    select: { id: true },
+    select: { id: true, allowedOrigins: true },
   });
   if (!org) return errors.notFound("Organization not found");
+
+  const originCheck = checkOriginAllowed(request, org.allowedOrigins);
+  if (!originCheck.allowed) return errors.forbidden("This origin is not authorized to access this organization's widget.");
 
   // Check if admin viewing (session or API key)
   let isAdmin = false;
@@ -67,7 +67,7 @@ export async function GET(
     planned: items.filter((i) => i.status === "planned").map(format),
     inProgress: items.filter((i) => i.status === "in-progress").map(format),
     done: items.filter((i) => i.status === "done").map(format),
-  }, 200, corsHeaders);
+  }, 200, corsHeaders(request, CORS_METHODS));
 }
 
 const createSchema = z.object({

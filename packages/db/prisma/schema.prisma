@@ -18,6 +18,7 @@ model Organization {
   // HMAC-SHA256 signing key for widget JWT identification
   secretKey    String  @unique @default(cuid())
   customDomain String? @unique
+  allowedOrigins String[] @default([])
   createdAt    DateTime @default(now())
 
   members              OrgMember[]
