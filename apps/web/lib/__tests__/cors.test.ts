@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { corsHeaders, checkOriginAllowed } from "../cors";
 
 function makeRequest(origin?: string): Request {
@@ -8,6 +8,16 @@ function makeRequest(origin?: string): Request {
 }
 
 describe("checkOriginAllowed", () => {
+  const originalAppUrl = process.env.NEXT_PUBLIC_APP_URL;
+
+  beforeEach(() => {
+    process.env.NEXT_PUBLIC_APP_URL = "https://freebase.vercel.app";
+  });
+
+  afterEach(() => {
+    process.env.NEXT_PUBLIC_APP_URL = originalAppUrl;
+  });
+
   it("allows when no Origin header and allowlist is empty", () => {
     expect(checkOriginAllowed(makeRequest(), [])).toEqual({ allowed: true });
   });
@@ -36,6 +46,21 @@ describe("checkOriginAllowed", () => {
 
   it("treats a missing/undefined allowedOrigins as unrestricted", () => {
     expect(checkOriginAllowed(makeRequest("https://evil.com"), undefined)).toEqual({ allowed: true });
+  });
+
+  it("always allows the app's own origin, even when a non-empty allowlist does not contain it", () => {
+    const result = checkOriginAllowed(makeRequest("https://freebase.vercel.app"), ["https://good.com"]);
+    expect(result).toEqual({ allowed: true });
+  });
+
+  it("allows the app's own origin with case/trailing-slash differences", () => {
+    const result = checkOriginAllowed(makeRequest("HTTPS://Freebase.Vercel.App/"), ["https://good.com"]);
+    expect(result).toEqual({ allowed: true });
+  });
+
+  it("still rejects an unrelated third-party origin when the app-origin exemption does not apply", () => {
+    const result = checkOriginAllowed(makeRequest("https://evil.com"), ["https://good.com"]);
+    expect(result).toEqual({ allowed: false, origin: "https://evil.com" });
   });
 });
 

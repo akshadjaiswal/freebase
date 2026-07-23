@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { NextRequest } from "next/server";
 
 const mockOrgRestricted = { id: "org-1", allowedOrigins: ["https://good.com"] };
@@ -20,9 +20,16 @@ const makeParams = (org: string) =>
   ({ params: Promise.resolve({ org }) } as { params: Promise<{ org: string }> });
 
 describe("posts POST — origin allowlist", () => {
+  const originalAppUrl = process.env.NEXT_PUBLIC_APP_URL;
+
   beforeEach(() => {
     vi.clearAllMocks();
     mockPrisma.organization.findUnique.mockResolvedValue(mockOrgRestricted);
+    process.env.NEXT_PUBLIC_APP_URL = "https://freebase.vercel.app";
+  });
+
+  afterEach(() => {
+    process.env.NEXT_PUBLIC_APP_URL = originalAppUrl;
   });
 
   it("rejects with 403 when Origin header does not match the org's allowlist", async () => {
@@ -89,6 +96,34 @@ describe("posts POST — origin allowlist", () => {
       method: "POST",
       body: JSON.stringify({ title: "Some feedback title", authorEmail: "user@example.com" }),
       headers: { "Content-Type": "application/json" },
+    });
+    const res = await POST(req, makeParams("test-org"));
+
+    expect(res.status).toBe(201);
+  });
+
+  it("allows a same-origin call from the app's own public board even when its origin isn't in the allowlist", async () => {
+    mockPrisma.feedbackPost.create.mockResolvedValue({
+      id: "post-1",
+      title: "Some feedback title",
+      description: null,
+      status: "open",
+      voteCount: 0,
+      pinned: false,
+      authorEmail: "user@example.com",
+      authorName: null,
+      category: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      _count: { comments: 0 },
+    });
+
+    const { POST } = await import("../route");
+
+    const req = new NextRequest("http://localhost/api/v1/orgs/test-org/posts", {
+      method: "POST",
+      body: JSON.stringify({ title: "Some feedback title", authorEmail: "user@example.com" }),
+      headers: { "Content-Type": "application/json", Origin: "https://freebase.vercel.app" },
     });
     const res = await POST(req, makeParams("test-org"));
 
