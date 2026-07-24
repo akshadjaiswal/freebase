@@ -13,11 +13,12 @@ Collect feedback, publish changelogs, and showcase your roadmap. Drop one `<scri
 | **Feedback board** | Public voting board. Users submit ideas, upvote, comment. Admin manages statuses, categories, pin posts. |
 | **Changelog** | Rich text editor (Tiptap), draft/publish flow, RSS feed. |
 | **Roadmap** | Three-column kanban: Planned → In Progress → Done. Admin drag-reorders, public read-only. |
-| **Embeddable widget** | Single `<script>` tag. Feedback form, changelog popup with unread badge, roadmap panel. <20KB gzip. |
+| **Embeddable widget** | Single `<script>` tag. A collapsed launcher button fans out to feedback, changelog (with unread badge), and roadmap panels. <20KB gzip. |
 | **REST API** | Full REST API with API key auth. Use it to integrate with your own tools. |
 | **Webhooks** | HMAC-signed outbound webhooks for `post.created`, `post.status_changed`, `comment.created`, `changelog.published`. |
 | **Command palette** | `⌘K` from anywhere in the admin to jump between sections. |
 | **Multi-org accounts** | One login, up to 5 organizations. Switch instantly from the sidebar — each org has fully isolated data and its own widget secret key. |
+| **Origin allowlist** | Restrict which domains can embed your widget via Settings → Allowed Origins. Unrestricted by default — your own pages are never affected either way. |
 
 ---
 
@@ -28,23 +29,7 @@ Collect feedback, publish changelogs, and showcase your roadmap. Drop one `<scri
 3. Set environment variables (see [SETUP.md](SETUP.md))
 4. Deploy to Vercel — one click
 
-See [SETUP.md](SETUP.md) for the full step-by-step guide.
-
----
-
-## Self-host with Docker
-
-```bash
-git clone https://github.com/akshadjaiswal/freebase
-cd freebase
-cp .env.example .env
-# Edit .env with your values (Supabase URL + keys, Resend, Upstash)
-docker compose up -d
-```
-
-App runs at `http://localhost:3000`. Postgres is included in the compose setup.
-
-See [Self-host with Docker](#self-host-with-docker) below for full details.
+See [SETUP.md](SETUP.md) for the full step-by-step guide, or [Self-host with Docker](#self-host-with-docker) below to run everything locally with a bundled Postgres instead of Neon.
 
 ---
 
@@ -94,6 +79,16 @@ One login can own and switch between up to 5 organizations — each with its own
 - **Switch instantly** from the org name dropdown at the top of the sidebar — no re-login, no page reload of the surrounding shell.
 - **Add another org** via "+ New organization" in the same dropdown (disabled once you hit the 5-org limit).
 - **Auto-lands on your last-active org** on login — the picker only shows up if there's no remembered org yet (first login, or you were removed from the last one).
+
+---
+
+## Widget origin allowlist
+
+By default, any website can embed your widget just by knowing your org's (public, non-secret) slug. Settings → Allowed Origins lets you restrict embedding to specific domains you trust.
+
+- **Unrestricted by default** — an empty list means any site can embed the widget, same as before this setting existed.
+- **Your own pages are never affected** — the org's own public feedback/changelog/roadmap pages keep working regardless of what's configured, even after you add a restriction.
+- **Enforced server-side** — a mismatched `Origin` header gets a 403 with no CORS headers, so a blocked site's browser can't even read the response.
 
 ---
 
@@ -162,7 +157,7 @@ function verify(rawBody, timestamp, signature, secret) {
 | `NEXT_PUBLIC_APP_URL` | ✅ | Public URL of your deployment |
 | `RESEND_API_KEY` | Optional | Resend API key (reserved for future email features) |
 | `EMAIL_FROM_DOMAIN` | Optional | Verified Resend domain |
-| `NEXT_PUBLIC_WIDGET_DEMO_ORG` | Optional | Org slug to show live widget on marketing page |
+| `NEXT_PUBLIC_WIDGET_DEMO_ORG` | Optional | Org slug to show a live widget across the whole app (mounted in the root layout — every route, including admin) |
 
 ---
 
@@ -185,6 +180,8 @@ docker compose exec web sh -c "DATABASE_URL=\$DATABASE_URL_UNPOOLED npx prisma m
 
 App runs at `http://localhost:3000`.
 
+Optionally seed demo data for a `freebase` org — `pnpm --filter @freebase/db seed` (idempotent) — and its widget origin allowlist for local testing — `pnpm --filter @freebase/db set-origins` (non-destructive, safe to re-run anytime).
+
 To use an external database (e.g. Neon) instead of the bundled Postgres, remove the `postgres` service from `docker-compose.yml` and set your own `DATABASE_URL` and `DATABASE_URL_UNPOOLED`.
 
 ---
@@ -201,7 +198,13 @@ To use an external database (e.g. Neon) instead of the bundled Postgres, remove 
 | Email | Resend (env-gated) |
 | Widget | Vite + Vanilla TypeScript, <20KB gzip |
 | Rate limit | Upstash Redis + @upstash/ratelimit |
-| Monorepo | pnpm workspaces |
+| Monorepo | pnpm workspaces + Turborepo |
+| Animations | motion |
+| Icons | Lucide React |
+| Theme | next-themes |
+| Validation | Zod |
+| Command palette | cmdk |
+| Nav progress bar | nextjs-toploader |
 
 ---
 
